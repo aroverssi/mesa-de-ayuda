@@ -1,0 +1,49 @@
+// app.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCSfHBcF7NwGYSv8IPV8PZcxb4P-EkQt_E",
+    authDomain: "mesa-de-ayuda-20d5e.firebaseapp.com",
+    projectId: "mesa-de-ayuda-20d5e",
+    storageBucket: "mesa-de-ayuda-20d5e.appspot.com",
+    messagingSenderId: "204339534053",
+    appId: "1:204339534053:web:5afebd0d0b9b7037ba9c0c",
+  measurementId: "G-FV6N5815RT"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById('usuario').value;
+    const descripcion = document.getElementById('descripcion').value;
+
+    try {
+        await addDoc(collection(db, "tickets"), {
+            usuario: usuario,
+            descripcion: descripcion,
+            estado: "Pendiente",
+            fechaCreacion: new Date()
+        });
+        alert("Ticket enviado correctamente");
+        document.getElementById('ticketForm').reset();
+        cargarTickets();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
+});
+
+async function cargarTickets() {
+    const ticketList = document.getElementById('ticketList');
+    ticketList.innerHTML = "";
+    const querySnapshot = await getDocs(collection(db, "tickets"));
+    querySnapshot.forEach((doc) => {
+        const ticket = doc.data();
+        ticketList.innerHTML += `<p><strong>${ticket.usuario}</strong>: ${ticket.descripcion} <em>[${ticket.estado}]</em></p>`;
+    });
+}
+
+// Cargar tickets al inicio
+cargarTickets();
