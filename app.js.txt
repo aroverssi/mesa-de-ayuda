@@ -3,12 +3,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCSfHBcF7NwGYSv8IPV8PZcxb4P-EkQt_E",
-    authDomain: "mesa-de-ayuda-20d5e.firebaseapp.com",
-    projectId: "mesa-de-ayuda-20d5e",
-    storageBucket: "mesa-de-ayuda-20d5e.appspot.com",
-    messagingSenderId: "204339534053",
-    appId: "1:204339534053:web:5afebd0d0b9b7037ba9c0c",
+  apiKey: "AIzaSyCSfHBcF7NwGYSv8IPV8PZcxb4P-EkQt_E",
+  authDomain: "mesa-de-ayuda-20d5e.firebaseapp.com",
+  projectId: "mesa-de-ayuda-20d5e",
+  storageBucket: "mesa-de-ayuda-20d5e.appspot.com",
+  messagingSenderId: "204339534053",
+  appId: "1:204339534053:web:5afebd0d0b9b7037ba9c0c",
   measurementId: "G-FV6N5815RT"
 };
 
@@ -21,6 +21,7 @@ document.getElementById('ticketForm').addEventListener('submit', async (e) => {
     const descripcion = document.getElementById('descripcion').value;
 
     try {
+        console.log("Enviando ticket:", { usuario, descripcion });
         await addDoc(collection(db, "tickets"), {
             usuario: usuario,
             descripcion: descripcion,
@@ -41,9 +42,45 @@ async function cargarTickets() {
     const querySnapshot = await getDocs(collection(db, "tickets"));
     querySnapshot.forEach((doc) => {
         const ticket = doc.data();
-        ticketList.innerHTML += `<p><strong>${ticket.usuario}</strong>: ${ticket.descripcion} <em>[${ticket.estado}]</em></p>`;
+        const ticketId = doc.id;  // Captura el ID del documento para actualizar el estado
+
+        ticketList.innerHTML += `
+            <div class="list-group-item">
+                <h5 class="mb-1"><strong>${ticket.usuario}</strong></h5>
+                <p class="mb-1">${ticket.descripcion}</p>
+                <small class="text-muted">Estado actual: ${ticket.estado}</small>
+                <br>
+                <label for="estado-${ticketId}">Cambiar estado:</label>
+                <select id="estado-${ticketId}" class="form-select">
+                    <option value="Pendiente" ${ticket.estado === "Pendiente" ? "selected" : ""}>Pendiente</option>
+                    <option value="En Proceso" ${ticket.estado === "En Proceso" ? "selected" : ""}>En Proceso</option>
+                    <option value="Resuelto" ${ticket.estado === "Resuelto" ? "selected" : ""}>Resuelto</option>
+                </select>
+                <button class="btn btn-sm btn-primary mt-2" onclick="actualizarEstado('${ticketId}')">Actualizar Estado</button>
+            </div>`;
     });
 }
+
+async function actualizarEstado(ticketId) {
+    // Obtiene el valor seleccionado del selector de estado
+    const nuevoEstado = document.getElementById(`estado-${ticketId}`).value;
+
+    try {
+        // Actualiza el estado del ticket en Firestore
+        const ticketRef = doc(db, "tickets", ticketId);
+        await updateDoc(ticketRef, {
+            estado: nuevoEstado,
+            fechaActualizacion: new Date()
+        });
+
+        alert("Estado del ticket actualizado correctamente.");
+        cargarTickets();  // Recarga la lista de tickets para reflejar el cambio
+    } catch (error) {
+        console.error("Error al actualizar el estado del ticket: ", error);
+    }
+}
+
+
 
 // Cargar tickets al inicio
 cargarTickets();

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Ayuda</title>
+    <!-- Incluye Bootstrap para darle estilo -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Enlace al archivo CSS personalizado (opcional) -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Scripts de Firebase para conectarse a la base de datos -->
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js"></script>
+
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        <!-- Título principal de la mesa de ayuda -->
+        <h1 class="text-center mb-4">Mesa de Ayuda</h1>
+
+        <!-- Formulario de envío de tickets, con estilo de tarjeta de Bootstrap -->
+        <div class="card p-4 shadow-sm mb-5">
+            <h3>Enviar un Ticket</h3>
+            <form id="ticketForm">
+                <div class="form-group">
+                    <label for="usuario">Nombre</label>
+                    <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">Descripción del problema</label>
+                    <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Enviar Ticket</button>
+            </form>
+        </div>
+
+        <!-- Sección de lista de tickets enviados, usando estilo de lista de Bootstrap -->
+        <h2 class="text-center mb-4">Tickets</h2>
+        <div id="ticketList" class="list-group">
+    <!-- Aquí se mostrarán los tickets con un selector de estado -->
+</div>
+
+    <!-- Archivo JavaScript para la lógica de Firebase y funcionamiento del formulario -->
+    <script src="app.js"></script>
+</body>
+</html>
