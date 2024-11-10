@@ -1,0 +1,52 @@
+// Importar las funciones necesarias desde el SDK de Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
+
+// Tu configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
+    projectId: "mesa-de-ayuda-f5a6a",
+    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
+    messagingSenderId: "912872235241",
+    appId: "1:912872235241:web:2fcf8f473413562c931078",
+    measurementId: "G-0KBEFHH7P9"
+};
+
+// Inicializar Firebase y Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Funcionalidad de envío de ticket
+document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById('usuario').value;
+    const descripcion = document.getElementById('descripcion').value;
+
+    try {
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            descripcion,
+            estado: "Pendiente",
+            fechaCreacion: new Date()
+        });
+        alert("Ticket enviado correctamente");
+        document.getElementById('ticketForm').reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
+});
+
+// Funcionalidad de carga de tickets (opcional, si necesitas mostrar los tickets en la página)
+async function cargarTickets() {
+    const ticketList = document.getElementById('ticketList');
+    ticketList.innerHTML = "";
+    const querySnapshot = await getDocs(collection(db, "tickets"));
+    querySnapshot.forEach((doc) => {
+        const ticket = doc.data();
+        ticketList.innerHTML += `<p><strong>${ticket.usuario}</strong>: ${ticket.descripcion}</p>`;
+    });
+}
+
+// Llamar a cargarTickets() cuando la página se cargue
+cargarTickets();
