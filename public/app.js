@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -38,14 +38,13 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const usuario = document.getElementById("usuario").value;
-    const company = document.getElementById("company").value;  // Coincide con el id en el HTML
+    const company = document.getElementById("company").value;
     const email = document.getElementById("email").value;
     const descripcion = document.getElementById("descripcion").value;
     const teamviewer_id = document.getElementById("teamviewer_id").value;
     const password = document.getElementById("password").value;
     const imagenFile = document.getElementById("imagen").files[0];
 
-    // Verificación extra para company
     if (!company) {
         alert("Por favor, selecciona una compañía.");
         return;
@@ -65,7 +64,7 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         // Agregar el ticket a la colección "tickets" en Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
-            company,  // Coincide con el id en el HTML
+            company,
             email,
             descripcion,
             teamviewer_id,
@@ -82,3 +81,33 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
+
+// Función para mostrar tickets en el tablero en tiempo real
+function mostrarTickets() {
+    const ticketsRef = collection(db, "tickets");
+    const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
+
+    // Escuchar los cambios en la colección de tickets
+    onSnapshot(ticketsRef, (snapshot) => {
+        ticketTable.innerHTML = ""; // Limpiar la tabla antes de llenarla con los datos
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${ticket.consecutivo}</td>
+                <td>${ticket.usuario}</td>
+                <td>${ticket.company}</td>
+                <td>${ticket.descripcion}</td>
+                <td>${ticket.estado}</td>
+                <td>${new Date(ticket.timestamp.seconds * 1000).toLocaleString()}</td>
+            `;
+
+            ticketTable.appendChild(row);
+        });
+    });
+}
+
+// Llamar a la función para mostrar los tickets en el tablero
+mostrarTickets();
