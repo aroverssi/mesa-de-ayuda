@@ -76,5 +76,3 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
-
-
