@@ -48,6 +48,33 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     try {
         const consecutivo = await obtenerConsecutivo();
         let imagenURL = "";
+  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// Función para cargar los tickets en el tablero en tiempo real
+const db = getFirestore();
+const ticketCollection = collection(db, "tickets");
+
+function loadTickets() {
+    onSnapshot(ticketCollection, (snapshot) => {
+        const ticketTableBody = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
+        ticketTableBody.innerHTML = ""; // Limpiar la tabla antes de recargar
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = ticketTableBody.insertRow();
+
+            row.insertCell(0).textContent = ticket.consecutivo;
+            row.insertCell(1).textContent = ticket.usuario;
+            row.insertCell(2).textContent = ticket.company;
+            row.insertCell(3).textContent = ticket.descripcion;
+            row.insertCell(4).textContent = ticket.estado;
+            row.insertCell(5).textContent = new Date(ticket.timestamp.seconds * 1000).toLocaleString();
+        });
+    });
+}
+
+loadTickets();
+      
 
         // Subir imagen si está disponible
         if (imagenFile) {
