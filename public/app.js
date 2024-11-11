@@ -5,13 +5,13 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
-    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
-    projectId: "mesa-de-ayuda-f5a6a",
-    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
-    messagingSenderId: "912872235241",
-    appId: "1:912872235241:web:2fcf8f473413562c931078",
-    measurementId: "G-0KBEFHH7P9"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID",
+    measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 // Inicializar Firebase y Firestore
@@ -61,7 +61,7 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
             imagenURL = await getDownloadURL(storageRef);
         }
 
-        // Agregar el ticket a la colección "tickets" en Firestore
+        // Agregar el ticket a la colección "tickets" en Firestore con fecha de apertura
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
@@ -70,7 +70,8 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
             teamviewer_id,
             password,
             estado: "pendiente",
-            timestamp: new Date(),
+            fechaApertura: new Date(),
+            fechaCierre: null, // Inicialmente null
             consecutivo,
             imagenURL
         });
@@ -87,8 +88,8 @@ function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
-    // Consulta para obtener los tickets ordenados por timestamp en orden ascendente
-    const q = query(ticketsRef, orderBy("timestamp", "asc"));
+    // Consulta para obtener los tickets ordenados por fechaApertura en orden ascendente
+    const q = query(ticketsRef, orderBy("fechaApertura", "asc"));
 
     // Escuchar los cambios en la colección de tickets y mostrar en orden
     onSnapshot(q, (snapshot) => {
@@ -104,7 +105,8 @@ function mostrarTickets() {
                 <td>${ticket.company}</td>
                 <td>${ticket.descripcion}</td>
                 <td>${ticket.estado}</td>
-                <td>${new Date(ticket.timestamp.seconds * 1000).toLocaleString()}</td>
+                <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
+                <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
             `;
 
             ticketTable.appendChild(row);
