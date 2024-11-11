@@ -38,12 +38,18 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const usuario = document.getElementById("usuario").value;
-    const company = document.getElementById("company").value;  // Asegurado de coincidir con el id en HTML
+    const company = document.getElementById("company").value;  // Coincide con el id en el HTML
     const email = document.getElementById("email").value;
     const descripcion = document.getElementById("descripcion").value;
     const teamviewer_id = document.getElementById("teamviewer_id").value;
     const password = document.getElementById("password").value;
     const imagenFile = document.getElementById("imagen").files[0];
+
+    // Verificación extra para company
+    if (!company) {
+        alert("Por favor, selecciona una compañía.");
+        return;
+    }
 
     try {
         const consecutivo = await obtenerConsecutivo();
@@ -76,4 +82,3 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
-
