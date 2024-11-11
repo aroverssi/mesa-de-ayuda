@@ -3,24 +3,22 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-
 // Configuración de Firebase
 const firebaseConfig = {
- apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
-  authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
-  projectId: "mesa-de-ayuda-f5a6a",
-  storageBucket: "mesa-de-ayuda-f5a6a.appspot.com",
-  messagingSenderId: "912872235241",
-  appId: "1:912872235241:web:2fcf8f473413562c931078",
-  measurementId: "G-0KBEFHH7P9"
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
+    projectId: "mesa-de-ayuda-f5a6a",
+    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
+    messagingSenderId: "912872235241",
+    appId: "1:912872235241:web:2fcf8f473413562c931078",
+    measurementId: "G-0KBEFHH7P9"
 };
 
 // Inicializar Firebase y Firestore
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);;
+const db = getFirestore(app);
 
-// Obtener el número de ticket consecutivo
+// Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
     const docSnap = await getDoc(docRef);
@@ -61,3 +59,4 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
+
