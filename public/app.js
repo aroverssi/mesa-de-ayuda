@@ -34,11 +34,14 @@ async function obtenerConsecutivo() {
 }
 
 // Funcionalidad de envío de ticket
+// En tu archivo JavaScript (app.js)
+
+// Funcionalidad de envío de ticket
 document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const usuario = document.getElementById("usuario").value;
-    const compania = document.getElementById("compania").value;
+    const company = document.getElementById("company").value;  // Cambiado a "company" para coincidir con el HTML
     const email = document.getElementById("email").value;
     const descripcion = document.getElementById("descripcion").value;
     const teamviewer_id = document.getElementById("teamviewer_id").value;
@@ -59,7 +62,7 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
         // Agregar el ticket a la colección "tickets" en Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
-            compania,
+            company,  // Ahora coincide con el formulario
             email,
             descripcion,
             teamviewer_id,
