@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -82,13 +82,16 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar tickets en el tablero en tiempo real
+// Función para mostrar tickets en el tablero en orden cronológico
 function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
-    // Escuchar los cambios en la colección de tickets
-    onSnapshot(ticketsRef, (snapshot) => {
+    // Consulta para obtener los tickets ordenados por timestamp en orden ascendente
+    const q = query(ticketsRef, orderBy("timestamp", "asc"));
+
+    // Escuchar los cambios en la colección de tickets y mostrar en orden
+    onSnapshot(q, (snapshot) => {
         ticketTable.innerHTML = ""; // Limpiar la tabla antes de llenarla con los datos
 
         snapshot.forEach((doc) => {
