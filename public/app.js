@@ -38,25 +38,43 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const usuario = document.getElementById("usuario").value;
+    const compania = document.getElementById("compania").value;
+    const email = document.getElementById("email").value;
     const descripcion = document.getElementById("descripcion").value;
     const teamviewer_id = document.getElementById("teamviewer_id").value;
     const password = document.getElementById("password").value;
+    const imagenFile = document.getElementById("imagen").files[0];
 
     try {
         const consecutivo = await obtenerConsecutivo();
+        let imagenURL = "";
+
+        // Subir imagen si está disponible
+        if (imagenFile) {
+            const storageRef = ref(getStorage(app), `tickets/${consecutivo}_${imagenFile.name}`);
+            await uploadBytes(storageRef, imagenFile);
+            imagenURL = await getDownloadURL(storageRef);
+        }
+
+        // Agregar el ticket a la colección "tickets" en Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
+            compania,
+            email,
             descripcion,
             teamviewer_id,
             password,
             estado: "pendiente",
             timestamp: new Date(),
-            consecutivo
+            consecutivo,
+            imagenURL
         });
+
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket: ", error);
     }
 });
+
 
