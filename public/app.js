@@ -5,13 +5,13 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    measurementId: "YOUR_MEASUREMENT_ID"
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
+    projectId: "mesa-de-ayuda-f5a6a",
+    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
+    messagingSenderId: "912872235241",
+    appId: "1:912872235241:web:2fcf8f473413562c931078",
+    measurementId: "G-0KBEFHH7P9"
 };
 
 // Inicializar Firebase y Firestore
