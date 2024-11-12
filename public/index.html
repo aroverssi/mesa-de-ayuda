@@ -22,7 +22,7 @@
                 </div>
                 <div class="form-group">
                     <label for="company">Compañía</label>
-                    <select id="company" class="form-control" required>  <!-- Cambiado a company -->
+                    <select id="company" class="form-control" required>
                         <option value="">Seleccione una compañía</option>
                         <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                         <option value="Allpack">Allpack</option>
@@ -54,11 +54,28 @@
                 <button type="submit" class="btn btn-primary">Enviar Ticket</button>
             </form>
         </div>
+        
         <h2 class="text-center mb-4">Tickets</h2>
         <div id="ticketList" class="list-group"></div>
     </div>
+    
     <div class="container my-5">
         <h2 class="text-center mb-4">Tablero de Tickets</h2>
+        
+        <!-- Filtros de Estado y Fecha -->
+        <div class="mb-3">
+            <label for="statusFilter">Filtrar por Estado:</label>
+            <select id="statusFilter" class="form-control d-inline w-auto" onchange="filterTickets()">
+                <option value="">Todos</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Procesando">Procesando</option>
+                <option value="Cerrado">Cerrado</option>
+            </select>
+
+            <label for="dateFilter" class="ml-3">Filtrar por Fecha:</label>
+            <input type="date" id="dateFilter" class="form-control d-inline w-auto" onchange="filterTickets()">
+        </div>
+
         <table class="table table-bordered" id="ticketTable">
             <thead>
                 <tr>
@@ -68,6 +85,7 @@
                     <th>Descripción</th>
                     <th>Estado</th>
                     <th>Fecha</th>
+                    <th>Fecha de Resolución</th> <!-- Nueva columna para la fecha de resolución -->
                 </tr>
             </thead>
             <tbody>
@@ -77,3 +95,4 @@
     </div>
 </body>
 </html>
+
