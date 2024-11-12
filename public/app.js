@@ -18,6 +18,36 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Función para verificar el rol del usuario
+async function checkUserRole(email) {
+    const userDocRef = doc(db, "users", email); // Supongamos que el ID de documento es el email del usuario
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+        return userDoc.data().role; // Devuelve el rol, ya sea "admin" o "user"
+    } else {
+        console.error("El usuario no existe en la base de datos.");
+        return null;
+    }
+}
+
+// Mostrar la interfaz dependiendo del rol
+async function displayInterface(email) {
+    const role = await checkUserRole(email);
+
+    if (role === "admin") {
+        document.getElementById("adminInterface").style.display = "block";
+        document.getElementById("userInterface").style.display = "none";
+        mostrarTickets(true); // Mostrar interfaz completa para administrador
+    } else if (role === "user") {
+        document.getElementById("adminInterface").style.display = "none";
+        document.getElementById("userInterface").style.display = "block";
+        mostrarTickets(false); // Mostrar solo tickets para el usuario
+    } else {
+        console.error("No se pudo determinar el rol del usuario.");
+    }
+}
+
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
@@ -83,8 +113,8 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     }
 });
 
-// Actualizar la función mostrarTickets para soportar los filtros
-function mostrarTickets() {
+// Actualizar la función mostrarTickets para soportar los filtros y la interfaz del administrador
+function mostrarTickets(isAdmin) {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
     const statusFilter = document.getElementById("statusFilter").value;
@@ -121,12 +151,33 @@ function mostrarTickets() {
                 <td>${ticket.estado === "cerrado" && ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
             `;
 
+            // Solo el administrador puede ver el botón de cambiar estado
+            if (isAdmin && ticket.estado !== "cerrado") {
+                const btn = document.createElement("button");
+                btn.textContent = "Cerrar Ticket";
+                btn.addEventListener("click", () => cerrarTicket(doc.id));
+                const cell = document.createElement("td");
+                cell.appendChild(btn);
+                row.appendChild(cell);
+            }
+
             ticketTable.appendChild(row);
         });
     });
 }
 
-// Llamar a mostrarTickets inicialmente y al presionar el botón de refrescar
-mostrarTickets();
-document.getElementById("refreshButton").addEventListener("click", mostrarTickets);
+// Función para cerrar un ticket (para administrador)
+async function cerrarTicket(ticketId) {
+    const ticketRef = doc(db, "tickets", ticketId);
+    await updateDoc(ticketRef, {
+        estado: "cerrado",
+        fechaCierre: new Date()
+    });
+}
+
+// Inicializar la visualización
+document.addEventListener("DOMContentLoaded", () => {
+    const userEmail = "correo_del_usuario"; // Asigna el correo del usuario autenticado
+    displayInterface(userEmail);
+});
 
