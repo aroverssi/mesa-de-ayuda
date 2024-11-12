@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...8zDW95o",
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -18,10 +18,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Ejemplo de rol de usuario; en producción, este valor debe obtenerse de la autenticación de Firebase
+// Rol de usuario de ejemplo; en producción, obtén este valor de Firebase Authentication
 const userRole = "admin"; // Cambia a "user" para probar la vista de usuario
 
-// Mostrar interfaz según el rol
+// Mostrar la interfaz correspondiente según el rol
 if (userRole === "admin") {
     document.getElementById("adminInterface").style.display = "block";
     mostrarTickets();
@@ -95,7 +95,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Actualizar la función mostrarTickets para soportar los filtros
+// Función para mostrar tickets en el tablero
 function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
@@ -187,5 +187,3 @@ function cargarEstadisticas() {
 
 // Llamar a mostrarTickets inicialmente y al presionar el botón de refrescar
 mostrarTickets();
-document.getElementById("refreshButton")?.addEventListener("click", mostrarTickets);
-
