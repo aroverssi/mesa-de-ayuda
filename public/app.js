@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -17,6 +17,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// Manejar el inicio de sesión
+document.getElementById("loginFormSubmit").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("emailLogin").value;
+    const password = document.getElementById("passwordLogin").value;
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            console.log("Inicio de sesión exitoso");
+        })
+        .catch((error) => {
+            console.error("Error de inicio de sesión:", error);
+            alert("Error de inicio de sesión");
+        });
+});
 
 // Verificar el estado de autenticación y mostrar la interfaz correspondiente
 onAuthStateChanged(auth, async (user) => {
@@ -42,3 +58,5 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById("loginForm").style.display = "block";
     }
 });
+
+// Resto del código para mostrar tickets, cargar estadísticas, etc.
