@@ -15,7 +15,7 @@
         <h1 class="text-center mb-4">Mesa de Ayuda</h1>
         <div class="card p-4 shadow-sm mb-5">
             <h3>Enviar un Ticket</h3>
-            <form id="ticketForm">
+            <form id="ticketForm" autocomplete="off"> <!-- Desactivar autocompletado -->
                 <div class="form-group">
                     <label for="usuario">Nombre</label>
                     <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
@@ -26,8 +26,8 @@
                         <option value="">Seleccione una compañía</option>
                         <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                         <option value="Allpack">Allpack</option>
-                        <option value="Busisness on Line">Business on Line</option>
-                        <option value="Almacen la victoria">Almacén La Victoria</option>
+                        <option value="Business on Line">Business on Line</option>
+                        <option value="Almacén La Victoria">Almacén La Victoria</option>
                         <option value="Zona Franca">Zona Franca</option>
                     </select>
                 </div>
@@ -55,27 +55,38 @@
             </form>
         </div>
         
-        <h2 class="text-center mb-4">Tickets</h2>
-        <div id="ticketList" class="list-group"></div>
-    </div>
-    
-    <div class="container my-5">
-        <h2 class="text-center mb-4">Tablero de Tickets</h2>
-        
-        <!-- Filtros de Estado y Fecha -->
-        <div class="mb-3">
-            <label for="statusFilter">Filtrar por Estado:</label>
-            <select id="statusFilter" class="form-control d-inline w-auto" onchange="filterTickets()">
-                <option value="">Todos</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="Procesando">Procesando</option>
-                <option value="Cerrado">Cerrado</option>
-            </select>
-
-            <label for="dateFilter" class="ml-3">Filtrar por Fecha:</label>
-            <input type="date" id="dateFilter" class="form-control d-inline w-auto" onchange="filterTickets()">
+        <!-- Filtros y botón de refrescar -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="statusFilter">Filtrar por Estado:</label>
+                <select id="statusFilter" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="procesando">Procesando</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dateFilter">Filtrar por Fecha:</label>
+                <input type="date" id="dateFilter" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="companyFilter">Filtrar por Compañía:</label>
+                <select id="companyFilter" class="form-control">
+                    <option value="">Todas</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business on Line">Business on Line</option>
+                    <option value="Almacén La Victoria">Almacén La Victoria</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button id="refreshButton" class="btn btn-secondary mt-4">Refrescar</button>
+            </div>
         </div>
 
+        <h2 class="text-center mb-4">Tablero de Tickets</h2>
         <table class="table table-bordered" id="ticketTable">
             <thead>
                 <tr>
@@ -85,7 +96,7 @@
                     <th>Descripción</th>
                     <th>Estado</th>
                     <th>Fecha</th>
-                    <th>Fecha de Resolución</th> <!-- Nueva columna para la fecha de resolución -->
+                    <th>Fecha de Resolución</th>
                 </tr>
             </thead>
             <tbody>
@@ -95,4 +106,3 @@
     </div>
 </body>
 </html>
-
