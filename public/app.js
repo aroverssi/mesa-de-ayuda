@@ -83,26 +83,24 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar tickets en el tablero en orden cronológico y con filtros
+// Actualizar la función mostrarTickets para soportar los filtros
 function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
     const statusFilter = document.getElementById("statusFilter").value;
     const dateFilter = document.getElementById("dateFilter").value;
+    const companyFilter = document.getElementById("companyFilter").value;
 
-    // Construir consulta con filtros
     let q = query(ticketsRef, orderBy("fechaApertura", "asc"));
 
-    if (statusFilter) {
-        q = query(q, where("estado", "==", statusFilter));
-    }
-
+    // Aplicar filtros dinámicamente
+    if (statusFilter) q = query(q, where("estado", "==", statusFilter));
+    if (companyFilter) q = query(q, where("company", "==", companyFilter));
     if (dateFilter) {
-        const selectedDate = new Date(dateFilter);
-        const nextDay = new Date(selectedDate);
-        nextDay.setDate(selectedDate.getDate() + 1);
-
-        q = query(q, where("fechaApertura", ">=", selectedDate), where("fechaApertura", "<", nextDay));
+        const startDate = new Date(dateFilter);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+        q = query(q, where("fechaApertura", ">=", startDate), where("fechaApertura", "<", endDate));
     }
 
     // Escuchar los cambios en la colección de tickets y mostrar en orden
@@ -120,7 +118,7 @@ function mostrarTickets() {
                 <td>${ticket.descripcion}</td>
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
-                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : ""}</td>
+                <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
             `;
 
             ticketTable.appendChild(row);
@@ -128,9 +126,7 @@ function mostrarTickets() {
     });
 }
 
-// Función para aplicar los filtros cuando el usuario cambia los valores
-document.getElementById("statusFilter").addEventListener("change", mostrarTickets);
-document.getElementById("dateFilter").addEventListener("change", mostrarTickets);
+// Llamar a mostrarTickets inicialmente y al presionar el botón de refrescar
+mostrarTickets();
+document.getElementById("refreshButton").addEventListener("click", mostrarTickets);
 
-// Cargar los tickets al iniciar la página
-document.addEventListener("DOMContentLoaded", mostrarTickets);
