@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    apiKey: "AIzaSy...8zDW95o",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -18,41 +18,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Función para verificar el rol del usuario
-async function checkUserRole(email) {
-    const userDocRef = doc(db, "users", email); // Supongamos que el ID de documento es el email del usuario
-    const userDoc = await getDoc(userDocRef);
+// Ejemplo de rol de usuario; en producción, este valor debe obtenerse de la autenticación de Firebase
+const userRole = "admin"; // Cambia a "user" para probar la vista de usuario
 
-    if (userDoc.exists()) {
-        return userDoc.data().role; // Devuelve el rol, ya sea "admin" o "user"
-    } else {
-        console.error("El usuario no existe en la base de datos.");
-        return null;
-    }
-}
-
-// Mostrar la interfaz dependiendo del rol
-async function displayInterface(email) {
-    const role = await checkUserRole(email);
-
-    if (role === "admin") {
-        document.getElementById("adminInterface").style.display = "block";
-        document.getElementById("userInterface").style.display = "none";
-        mostrarTickets(true); // Mostrar interfaz completa para administrador
-    } else if (role === "user") {
-        document.getElementById("adminInterface").style.display = "none";
-        document.getElementById("userInterface").style.display = "block";
-        mostrarTickets(false); // Mostrar solo tickets para el usuario
-    } else {
-        console.error("No se pudo determinar el rol del usuario.");
-    }
+// Mostrar interfaz según el rol
+if (userRole === "admin") {
+    document.getElementById("adminInterface").style.display = "block";
+    mostrarTickets();
+    cargarEstadisticas();
+} else {
+    document.getElementById("userInterface").style.display = "block";
 }
 
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
     const docSnap = await getDoc(docRef);
-    
+
     if (docSnap.exists()) {
         const currentConsecutivo = docSnap.data().consecutivo;
         await updateDoc(docRef, { consecutivo: increment(1) });
@@ -64,7 +46,7 @@ async function obtenerConsecutivo() {
 }
 
 // Funcionalidad de envío de ticket
-document.getElementById("ticketForm").addEventListener("submit", async (e) => {
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     
     const usuario = document.getElementById("usuario").value;
@@ -113,8 +95,8 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     }
 });
 
-// Actualizar la función mostrarTickets para soportar los filtros y la interfaz del administrador
-function mostrarTickets(isAdmin) {
+// Actualizar la función mostrarTickets para soportar los filtros
+function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
     const statusFilter = document.getElementById("statusFilter").value;
@@ -123,7 +105,6 @@ function mostrarTickets(isAdmin) {
 
     let q = query(ticketsRef, orderBy("fechaApertura", "asc"));
 
-    // Aplicar filtros dinámicamente
     if (statusFilter) q = query(q, where("estado", "==", statusFilter));
     if (companyFilter) q = query(q, where("company", "==", companyFilter));
     if (dateFilter) {
@@ -133,9 +114,8 @@ function mostrarTickets(isAdmin) {
         q = query(q, where("fechaApertura", ">=", startDate), where("fechaApertura", "<", endDate));
     }
 
-    // Escuchar los cambios en la colección de tickets y mostrar en orden
     onSnapshot(q, (snapshot) => {
-        ticketTable.innerHTML = ""; // Limpiar la tabla antes de llenarla con los datos
+        ticketTable.innerHTML = "";
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
@@ -149,35 +129,63 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" && ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                ${userRole === "admin" ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : ""}
             `;
-
-            // Solo el administrador puede ver el botón de cambiar estado
-            if (isAdmin && ticket.estado !== "cerrado") {
-                const btn = document.createElement("button");
-                btn.textContent = "Cerrar Ticket";
-                btn.addEventListener("click", () => cerrarTicket(doc.id));
-                const cell = document.createElement("td");
-                cell.appendChild(btn);
-                row.appendChild(cell);
-            }
 
             ticketTable.appendChild(row);
         });
     });
 }
 
-// Función para cerrar un ticket (para administrador)
-async function cerrarTicket(ticketId) {
-    const ticketRef = doc(db, "tickets", ticketId);
-    await updateDoc(ticketRef, {
-        estado: "cerrado",
-        fechaCierre: new Date()
+// Función para cambiar el estado del ticket (para el administrador)
+async function cambiarEstado(ticketId, estadoActual) {
+    const nuevoEstado = estadoActual === "pendiente" ? "cerrado" : "pendiente";
+    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
+
+    try {
+        await updateDoc(doc(db, "tickets", ticketId), {
+            estado: nuevoEstado,
+            fechaCierre: fechaCierre,
+        });
+        alert(`El estado del ticket ha sido actualizado a: ${nuevoEstado}`);
+    } catch (error) {
+        console.error("Error al cambiar el estado del ticket: ", error);
+    }
+}
+
+// Función para cargar estadísticas en el panel del administrador
+function cargarEstadisticas() {
+    const statsList = document.getElementById("adminStats");
+    let totalTickets = 0;
+    let totalCerrados = 0;
+    let sumaResolucion = 0;
+
+    const q = query(collection(db, "tickets"));
+    onSnapshot(q, (snapshot) => {
+        totalTickets = snapshot.size;
+        totalCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado") {
+                totalCerrados++;
+                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
+        statsList.innerHTML = `
+            <li>Total de Tickets: ${totalTickets}</li>
+            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
+            <li>Tickets Cerrados: ${totalCerrados}</li>
+            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+        `;
     });
 }
 
-// Inicializar la visualización
-document.addEventListener("DOMContentLoaded", () => {
-    const userEmail = "correo_del_usuario"; // Asigna el correo del usuario autenticado
-    displayInterface(userEmail);
-});
+// Llamar a mostrarTickets inicialmente y al presionar el botón de refrescar
+mostrarTickets();
+document.getElementById("refreshButton")?.addEventListener("click", mostrarTickets);
 
