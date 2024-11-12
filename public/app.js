@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -83,13 +83,27 @@ document.getElementById("ticketForm").addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar tickets en el tablero en orden cronológico
+// Función para mostrar tickets en el tablero en orden cronológico y con filtros
 function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
+    const statusFilter = document.getElementById("statusFilter").value;
+    const dateFilter = document.getElementById("dateFilter").value;
 
-    // Consulta para obtener los tickets ordenados por fechaApertura en orden ascendente
-    const q = query(ticketsRef, orderBy("fechaApertura", "asc"));
+    // Construir consulta con filtros
+    let q = query(ticketsRef, orderBy("fechaApertura", "asc"));
+
+    if (statusFilter) {
+        q = query(q, where("estado", "==", statusFilter));
+    }
+
+    if (dateFilter) {
+        const selectedDate = new Date(dateFilter);
+        const nextDay = new Date(selectedDate);
+        nextDay.setDate(selectedDate.getDate() + 1);
+
+        q = query(q, where("fechaApertura", ">=", selectedDate), where("fechaApertura", "<", nextDay));
+    }
 
     // Escuchar los cambios en la colección de tickets y mostrar en orden
     onSnapshot(q, (snapshot) => {
@@ -106,7 +120,7 @@ function mostrarTickets() {
                 <td>${ticket.descripcion}</td>
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
-                <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : ""}</td>
             `;
 
             ticketTable.appendChild(row);
@@ -114,5 +128,9 @@ function mostrarTickets() {
     });
 }
 
-// Llamar a la función para mostrar los tickets en el tablero
-mostrarTickets();
+// Función para aplicar los filtros cuando el usuario cambia los valores
+document.getElementById("statusFilter").addEventListener("change", mostrarTickets);
+document.getElementById("dateFilter").addEventListener("change", mostrarTickets);
+
+// Cargar los tickets al iniciar la página
+document.addEventListener("DOMContentLoaded", mostrarTickets);
