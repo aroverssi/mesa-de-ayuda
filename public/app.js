@@ -4,7 +4,7 @@ import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, se
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey
+    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey 
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -21,13 +21,14 @@ const db = getFirestore(app);
 document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
-    mostrarTickets();
+    mostrarTickets(true);  // Llamada con parámetro que indica que es administrador
     cargarEstadisticas();
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
+    mostrarTickets(false);  // Llamada con parámetro que indica que es usuario normal
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -72,8 +73,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets en el tablero del administrador
-function mostrarTickets() {
+// Función para mostrar los tickets en el tablero
+function mostrarTickets(esAdmin) {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
@@ -92,7 +93,7 @@ function mostrarTickets() {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                <td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>
+                ${esAdmin ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : ""}
             `;
 
             ticketTable.appendChild(row);
