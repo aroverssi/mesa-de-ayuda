@@ -1,11 +1,10 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey 
+    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -14,33 +13,22 @@ const firebaseConfig = {
     measurementId: "G-0KBEFHH7P9"
 };
 
-// Inicializar Firebase, Firestore y Auth
+// Inicializar Firebase y Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
 
-// Manejo de la selección de rol y autenticación de administrador
+// Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
-    const adminEmail = prompt("Ingrese el correo electrónico del administrador:");
-    const adminPassword = prompt("Ingrese la contraseña:");
-
-    signInWithEmailAndPassword(auth, adminEmail, adminPassword)
-        .then(() => {
-            document.getElementById("roleSelection").style.display = "none";
-            document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets();
-            cargarEstadisticas();
-        })
-        .catch((error) => {
-            console.error("Error en la autenticación de administrador: ", error);
-            alert("Error en la autenticación. Verifique sus credenciales.");
-        });
+    document.getElementById("roleSelection").style.display = "none";
+    document.getElementById("adminInterface").style.display = "block";
+    mostrarTickets(true);  // Llamada con parámetro que indica que es administrador
+    cargarEstadisticas();
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets();
+    mostrarTickets(false);  // Llamada con parámetro que indica que es usuario normal
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -85,8 +73,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets
-function mostrarTickets() {
+// Función para mostrar los tickets en el tablero
+function mostrarTickets(esAdmin) {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
@@ -105,7 +93,7 @@ function mostrarTickets() {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                ${auth.currentUser ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : ""}
+                ${esAdmin ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : ""}
             `;
 
             ticketTable.appendChild(row);
@@ -113,13 +101,8 @@ function mostrarTickets() {
     });
 }
 
-// Función para cambiar el estado del ticket (solo disponible para el administrador)
+// Función para cambiar el estado del ticket
 async function cambiarEstado(ticketId, estadoActual) {
-    if (!auth.currentUser) {
-        alert("Acción permitida solo para el administrador.");
-        return;
-    }
-
     const nuevoEstado = estadoActual === "pendiente" ? "cerrado" : "pendiente";
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
@@ -134,10 +117,8 @@ async function cambiarEstado(ticketId, estadoActual) {
     }
 }
 
-// Función para cargar estadísticas (solo para el administrador)
+// Función para cargar estadísticas del administrador
 function cargarEstadisticas() {
-    if (!auth.currentUser) return;
-
     const statsList = document.getElementById("adminStats");
     let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
 
@@ -155,12 +136,11 @@ function cargarEstadisticas() {
             }
         });
 
-        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
         statsList.innerHTML = `
             <li>Total de Tickets: ${totalTickets}</li>
             <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
             <li>Tickets Cerrados: ${totalCerrados}</li>
-            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+            <li>Promedio de Resolución (en horas): ${(totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A")}</li>
         `;
     });
 }
