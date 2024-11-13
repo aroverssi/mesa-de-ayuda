@@ -1,10 +1,10 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",  // Completa el apiKey
+    apiKey: "AIzaSy...",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -22,7 +22,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
     document.getElementById("ticketBoard").style.display = "block";  // Mostrar el tablero a los administradores
-    mostrarTickets();
+    mostrarTickets("admin");
     cargarEstadisticas();
 });
 
@@ -30,7 +30,7 @@ document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
     document.getElementById("ticketBoard").style.display = "block";  // Mostrar el tablero a los usuarios
-    mostrarTickets();  // Permitir a los usuarios ver los tickets también
+    mostrarTickets("user");
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -75,8 +75,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets en el tablero para ambos roles
-function mostrarTickets() {
+// Función para mostrar los tickets en el tablero
+function mostrarTickets(rol) {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
@@ -98,7 +98,7 @@ function mostrarTickets() {
             `;
 
             // Solo el administrador verá el botón de cambiar estado
-            if (document.getElementById("adminInterface").style.display === "block") {
+            if (rol === "admin") {
                 const actionCell = document.createElement("td");
                 const changeButton = document.createElement("button");
                 changeButton.classList.add("btn", "btn-sm", "btn-primary");
@@ -156,6 +156,3 @@ function cargarEstadisticas() {
         `;
     });
 }
-
-// Llamar a mostrarTickets cuando se carga la interfaz de usuario
-document.getElementById("userInterface") ? mostrarTickets() : null;
