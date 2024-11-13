@@ -4,7 +4,7 @@ import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, se
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey
+    apiKey: "AIzaSy...",  // Completa el apiKey
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -21,6 +21,7 @@ const db = getFirestore(app);
 document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
+    document.getElementById("ticketBoard").style.display = "block";  // Mostrar el tablero a los administradores
     mostrarTickets();
     cargarEstadisticas();
 });
@@ -28,6 +29,8 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
+    document.getElementById("ticketBoard").style.display = "block";  // Mostrar el tablero a los usuarios
+    mostrarTickets();  // Permitir a los usuarios ver los tickets también
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -72,7 +75,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets en el tablero del administrador
+// Función para mostrar los tickets en el tablero para ambos roles
 function mostrarTickets() {
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
@@ -92,15 +95,25 @@ function mostrarTickets() {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                <td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>
             `;
+
+            // Solo el administrador verá el botón de cambiar estado
+            if (document.getElementById("adminInterface").style.display === "block") {
+                const actionCell = document.createElement("td");
+                const changeButton = document.createElement("button");
+                changeButton.classList.add("btn", "btn-sm", "btn-primary");
+                changeButton.textContent = "Cambiar Estado";
+                changeButton.onclick = () => cambiarEstado(doc.id, ticket.estado);
+                actionCell.appendChild(changeButton);
+                row.appendChild(actionCell);
+            }
 
             ticketTable.appendChild(row);
         });
     });
 }
 
-// Función para cambiar el estado del ticket
+// Función para cambiar el estado del ticket (solo accesible para el administrador)
 async function cambiarEstado(ticketId, estadoActual) {
     const nuevoEstado = estadoActual === "pendiente" ? "cerrado" : "pendiente";
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
@@ -143,3 +156,6 @@ function cargarEstadisticas() {
         `;
     });
 }
+
+// Llamar a mostrarTickets cuando se carga la interfaz de usuario
+document.getElementById("userInterface") ? mostrarTickets() : null;
