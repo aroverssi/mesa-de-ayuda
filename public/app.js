@@ -5,7 +5,7 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
+    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey 
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -148,4 +148,19 @@ function cargarEstadisticas() {
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            if (
+            if (ticket.estado === "cerrado") {
+                totalCerrados++;
+                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
+        statsList.innerHTML = `
+            <li>Total de Tickets: ${totalTickets}</li>
+            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
+            <li>Tickets Cerrados: ${totalCerrados}</li>
+            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+        `;
+    });
+}
