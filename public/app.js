@@ -1,9 +1,10 @@
+// Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
+    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -142,4 +143,3 @@ function cargarEstadisticas() {
         `;
     });
 }
-
