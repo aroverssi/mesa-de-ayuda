@@ -34,6 +34,10 @@
                             <option value="">Seleccione una compañía</option>
                             <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                             <option value="Allpack">Allpack</option>
+                            <option value="Business On Line">Business On Line</option>
+                            <option value="Zona Franca">Zona Franca</option>
+                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -63,19 +67,22 @@
             <!-- Filtros para Usuario -->
             <div class="filters mb-4">
                 <h4>Filtrar Tickets</h4>
-                <select id="filtroEstadoUsuario" class="form-control mb-2">
-                    <option value="">Filtrar por Estado</option>
-                    <option value="pendiente">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                    <option value="abierto">Abierto</option>
-                </select>
-                <select id="filtroCompanyUsuario" class="form-control mb-2">
+                <select id="userFilterCompany" class="form-control mb-2">
                     <option value="">Filtrar por Compañía</option>
                     <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                     <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                 </select>
-                <input type="date" id="filtroFechaInicioUsuario" class="form-control mb-2" placeholder="Fecha Inicio">
-                <input type="date" id="filtroFechaFinUsuario" class="form-control" placeholder="Fecha Fin">
+                <input type="date" id="userFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
+                <select id="userFilterStatus" class="form-control">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="en progreso">En Progreso</option>
+                </select>
                 <button id="userFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
             </div>
 
@@ -102,19 +109,22 @@
             <!-- Filtros para Administrador -->
             <div class="filters mb-4">
                 <h4>Filtrar Tickets</h4>
-                <select id="filtroEstadoAdmin" class="form-control mb-2">
-                    <option value="">Filtrar por Estado</option>
-                    <option value="pendiente">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                    <option value="abierto">Abierto</option>
-                </select>
-                <select id="filtroCompanyAdmin" class="form-control mb-2">
+                <select id="adminFilterCompany" class="form-control mb-2">
                     <option value="">Filtrar por Compañía</option>
                     <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                     <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                 </select>
-                <input type="date" id="filtroFechaInicioAdmin" class="form-control mb-2" placeholder="Fecha Inicio">
-                <input type="date" id="filtroFechaFinAdmin" class="form-control" placeholder="Fecha Fin">
+                <input type="date" id="adminFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
+                <select id="adminFilterStatus" class="form-control">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="en progreso">En Progreso</option>
+                </select>
                 <button id="adminFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
             </div>
 
