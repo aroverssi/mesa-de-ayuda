@@ -63,10 +63,19 @@
             <!-- Filtros para Usuario -->
             <div class="filters mb-4">
                 <h4>Filtrar Tickets</h4>
-                <input type="text" id="filtroUsuario" class="form-control mb-2" placeholder="Filtrar por Nombre">
-                <input type="text" id="filtroCompany" class="form-control mb-2" placeholder="Filtrar por Compañía">
-                <input type="date" id="filtroFechaInicio" class="form-control mb-2" placeholder="Fecha Inicio">
-                <input type="date" id="filtroFechaFin" class="form-control" placeholder="Fecha Fin">
+                <select id="filtroEstadoUsuario" class="form-control mb-2">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">En Proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="abierto">Abierto</option>
+                </select>
+                <select id="filtroCompanyUsuario" class="form-control mb-2">
+                    <option value="">Filtrar por Compañía</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                </select>
+                <input type="date" id="filtroFechaInicioUsuario" class="form-control mb-2" placeholder="Fecha Inicio">
+                <input type="date" id="filtroFechaFinUsuario" class="form-control" placeholder="Fecha Fin">
                 <button id="userFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
             </div>
 
@@ -93,8 +102,17 @@
             <!-- Filtros para Administrador -->
             <div class="filters mb-4">
                 <h4>Filtrar Tickets</h4>
-                <input type="text" id="filtroUsuarioAdmin" class="form-control mb-2" placeholder="Filtrar por Nombre">
-                <input type="text" id="filtroCompanyAdmin" class="form-control mb-2" placeholder="Filtrar por Compañía">
+                <select id="filtroEstadoAdmin" class="form-control mb-2">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">En Proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="abierto">Abierto</option>
+                </select>
+                <select id="filtroCompanyAdmin" class="form-control mb-2">
+                    <option value="">Filtrar por Compañía</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                </select>
                 <input type="date" id="filtroFechaInicioAdmin" class="form-control mb-2" placeholder="Fecha Inicio">
                 <input type="date" id="filtroFechaFinAdmin" class="form-control" placeholder="Fecha Fin">
                 <button id="adminFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
