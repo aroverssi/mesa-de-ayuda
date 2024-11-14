@@ -22,9 +22,11 @@
         <!-- Interfaz de Usuario y Tablero de Tickets Compartido -->
         <div id="userInterface" style="display: none;">
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            <!-- Formulario de Envío de Ticket -->
             <div class="card p-4 shadow-sm mb-5">
                 <h3>Enviar un Ticket</h3>
                 <form id="ticketForm" autocomplete="off">
+                    <!-- Campos de formulario -->
                     <div class="form-group">
                         <label for="usuario">Nombre</label>
                         <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
@@ -70,6 +72,7 @@
                 <h4>Filtrar Tickets</h4>
                 <select id="userFilterCompany" class="form-control mb-2">
                     <option value="">Filtrar por Compañía</option>
+                    <!-- Opciones de filtro de compañía -->
                     <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                     <option value="Allpack">Allpack</option>
                     <option value="Business On Line">Business On Line</option>
@@ -112,6 +115,7 @@
                 <h4>Filtrar Tickets</h4>
                 <select id="adminFilterCompany" class="form-control mb-2">
                     <option value="">Filtrar por Compañía</option>
+                    <!-- Opciones de filtro de compañía -->
                     <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                     <option value="Allpack">Allpack</option>
                     <option value="Business On Line">Business On Line</option>
@@ -143,7 +147,9 @@
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <!-- Filas de tickets cargadas dinámicamente desde app.js -->
+                </tbody>
             </table>
             <h3 class="mt-5">Estadísticas</h3>
             <ul id="adminStats" class="list-group mt-3">
