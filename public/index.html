@@ -59,6 +59,16 @@
                     <button type="submit" class="btn btn-primary">Enviar Ticket</button>
                 </form>
             </div>
+
+            <!-- Filtros para Usuario -->
+            <div class="filters mb-4">
+                <h4>Filtrar Tickets</h4>
+                <input type="text" id="userFilterName" class="form-control mb-2" placeholder="Filtrar por Nombre">
+                <input type="text" id="userFilterCompany" class="form-control mb-2" placeholder="Filtrar por Compañía">
+                <input type="date" id="userFilterDate" class="form-control" placeholder="Filtrar por Fecha">
+                <button id="userFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
+            </div>
+
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
                 <thead>
@@ -79,6 +89,15 @@
 
         <!-- Interfaz de Administrador -->
         <div id="adminInterface" style="display: none;">
+            <!-- Filtros para Administrador -->
+            <div class="filters mb-4">
+                <h4>Filtrar Tickets</h4>
+                <input type="text" id="adminFilterName" class="form-control mb-2" placeholder="Filtrar por Nombre">
+                <input type="text" id="adminFilterCompany" class="form-control mb-2" placeholder="Filtrar por Compañía">
+                <input type="date" id="adminFilterDate" class="form-control" placeholder="Filtrar por Fecha">
+                <button id="adminFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
+            </div>
+
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
                 <thead>
