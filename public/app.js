@@ -23,7 +23,6 @@ const storage = getStorage(app);
 document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
-    console.log("Modo admin activado"); // Confirmación del modo admin activado
     mostrarTickets(true);  // Cargar tickets con permisos de admin
     cargarEstadisticas();
 });
@@ -105,11 +104,9 @@ function mostrarTickets(isAdmin) {
     onSnapshot(query(ticketsRef, orderBy("fechaApertura", "asc")), (snapshot) => {
         ticketTable.innerHTML = "";
 
-        console.log("Número de tickets obtenidos:", snapshot.size); // Log para verificar el número de tickets obtenidos
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            console.log("Ticket:", ticket); // Log para verificar los datos de cada ticket
-
+            console.log("Datos del ticket:", ticket); // Log para verificar los datos de cada ticket
             const row = document.createElement("tr");
 
             row.innerHTML = `
