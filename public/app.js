@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -100,18 +100,28 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets
+// Función para mostrar los tickets con filtros
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    const ticketsRef = collection(db, "tickets");
+    // Obtener valores de filtro
+    const usuarioFiltro = document.getElementById("filtroUsuario")?.value || "";
+    const companyFiltro = document.getElementById("filtroCompany")?.value || "";
+    const fechaInicioFiltro = document.getElementById("filtroFechaInicio")?.value || "";
+    const fechaFinFiltro = document.getElementById("filtroFechaFin")?.value || "";
 
-    onSnapshot(query(ticketsRef, orderBy("fechaApertura", "asc")), (snapshot) => {
+    // Construir la consulta de Firestore con los filtros aplicados
+    let consulta = collection(db, "tickets");
+    if (usuarioFiltro) consulta = query(consulta, where("usuario", "==", usuarioFiltro));
+    if (companyFiltro) consulta = query(consulta, where("company", "==", companyFiltro));
+    if (fechaInicioFiltro) consulta = query(consulta, where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
+    if (fechaFinFiltro) consulta = query(consulta, where("fechaApertura", "<=", new Date(fechaFinFiltro)));
+
+    onSnapshot(consulta, (snapshot) => {
         ticketTable.innerHTML = "";
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            console.log("Datos del ticket:", ticket); // Log para verificar los datos de cada ticket
             const row = document.createElement("tr");
 
             row.innerHTML = `
@@ -174,3 +184,14 @@ function cargarEstadisticas() {
         `;
     });
 }
+
+// Event listeners para aplicar filtros
+document.getElementById("filtroUsuario")?.addEventListener("change", () => mostrarTickets(false));
+document.getElementById("filtroCompany")?.addEventListener("change", () => mostrarTickets(false));
+document.getElementById("filtroFechaInicio")?.addEventListener("change", () => mostrarTickets(false));
+document.getElementById("filtroFechaFin")?.addEventListener("change", () => mostrarTickets(false));
+
+document.getElementById("filtroUsuarioAdmin")?.addEventListener("change", () => mostrarTickets(true));
+document.getElementById("filtroCompanyAdmin")?.addEventListener("change", () => mostrarTickets(true));
+document.getElementById("filtroFechaInicioAdmin")?.addEventListener("change", () => mostrarTickets(true));
+document.getElementById("filtroFechaFinAdmin")?.addEventListener("change", () => mostrarTickets(true));
