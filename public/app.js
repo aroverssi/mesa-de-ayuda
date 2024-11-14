@@ -1,8 +1,8 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -29,30 +29,38 @@ async function verificarRolAdmin(uid) {
     return docSnap.exists() && docSnap.data().role === "admin";
 }
 
-// Manejo de la selección de rol (con autenticación)
-document.getElementById("adminLogin").addEventListener("click", async () => {
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const esAdmin = await verificarRolAdmin(user.uid);
-            if (esAdmin) {
-                document.getElementById("roleSelection").style.display = "none";
-                document.getElementById("adminInterface").style.display = "block";
-                mostrarTickets(true);  // Cargar tickets con permisos de admin
-                cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
-            } else {
-                alert("No tienes permiso para acceder a esta sección.");
-                auth.signOut();  // Opcional: Cerrar sesión si no es admin
-            }
+// Función para iniciar sesión como administrador
+async function iniciarSesion(email, password) {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const esAdmin = await verificarRolAdmin(user.uid);
+
+        if (esAdmin) {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
+            mostrarTickets(true);
+            cargarEstadisticas();
         } else {
-            alert("Inicia sesión para acceder.");
+            alert("No tienes permiso para acceder a esta sección.");
+            auth.signOut();  // Cerrar sesión si no es admin
         }
-    });
+    } catch (error) {
+        alert("Error de inicio de sesión: " + error.message);
+    }
+}
+
+// Manejo de la selección de rol
+document.getElementById("adminLogin").addEventListener("click", () => {
+    const email = prompt("Ingresa tu correo de administrador:");
+    const password = prompt("Ingresa tu contraseña:");
+    iniciarSesion(email, password);
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+    mostrarTickets(false);
 });
 
 // Botones para regresar a la selección de roles
@@ -127,17 +135,13 @@ async function ejecutarCambioEstado(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             fechaCierre: fechaCierre,
         });
 
         alert(`Estado del ticket actualizado a: ${nuevoEstado}`);
-        
-        // Llamada a la función de notificación por correo
         enviarNotificacionCorreo(ticketId, nuevoEstado);
-
     } catch (error) {
         console.error("Error al cambiar el estado del ticket: ", error);
     }
