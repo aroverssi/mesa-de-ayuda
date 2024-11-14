@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey 
+    apiKey: "AIzaSy...",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -100,7 +100,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets con filtros
+// Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
@@ -109,8 +109,8 @@ function mostrarTickets(isAdmin) {
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
 
-    // Construir la consulta de Firestore con los filtros aplicados
-    let consulta = collection(db, "tickets");
+    // Construir la consulta de Firestore con los filtros aplicados y ordenar cronológicamente
+    let consulta = query(collection(db, "tickets"), orderBy("fechaApertura", "asc"));
     if (estadoFiltro) consulta = query(consulta, where("estado", "==", estadoFiltro));
     if (companyFiltro) consulta = query(consulta, where("company", "==", companyFiltro));
     if (fechaFiltro) consulta = query(consulta, where("fechaApertura", "==", new Date(fechaFiltro)));
@@ -186,4 +186,3 @@ function cargarEstadisticas() {
 // Event listeners para aplicar filtros
 document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
 document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
-
