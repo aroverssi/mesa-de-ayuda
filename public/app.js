@@ -24,7 +24,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
     mostrarTickets(true);  // Cargar tickets con permisos de admin
-    cargarEstadisticas();
+    cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
@@ -100,7 +100,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets con menú de cambio de estado y ejecución
+// Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
@@ -162,16 +162,41 @@ async function ejecutarCambioEstado(ticketId) {
 
 // Función para enviar notificación por correo
 async function enviarNotificacionCorreo(ticketId, nuevoEstado) {
-    // Aquí va el código para enviar el correo
-    // Opcional: Puedes utilizar Firebase Functions para manejar esta lógica en el servidor.
     console.log(`Enviando correo de notificación para ticket ${ticketId} con estado ${nuevoEstado}`);
+}
+
+// Función para cargar estadísticas (solo para el administrador)
+function cargarEstadisticas() {
+    const statsList = document.getElementById("adminStats");
+    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
+
+    onSnapshot(collection(db, "tickets"), (snapshot) => {
+        totalTickets = snapshot.size;
+        totalCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado") {
+                totalCerrados++;
+                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
+        statsList.innerHTML = `
+            <li>Total de Tickets: ${totalTickets}</li>
+            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
+            <li>Tickets Cerrados: ${totalCerrados}</li>
+            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+        `;
+    });
 }
 
 // Event listeners para aplicar filtros
 document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
 document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 
-// Resto de funciones y lógica aquí (sin cambios significativos)
-
-
-
+// Exportar funciones globales para acceso desde el HTML
+window.ejecutarCambioEstado = ejecutarCambioEstado;
