@@ -1,7 +1,7 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -14,27 +14,17 @@ const firebaseConfig = {
     measurementId: "G-0KBEFHH7P9"
 };
 
-// Inicializar Firebase, Firestore y Auth
+// Inicializar Firebase, Firestore y Storage
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
+const storage = getStorage(app);
 
-// Manejo de la selección de rol y autenticación de administrador
+// Manejo de la selección de rol (sin autenticación)
 document.getElementById("adminLogin").addEventListener("click", () => {
-    const adminEmail = prompt("Ingrese el correo electrónico del administrador:");
-    const adminPassword = prompt("Ingrese la contraseña:");
-
-    signInWithEmailAndPassword(auth, adminEmail, adminPassword)
-        .then(() => {
-            document.getElementById("roleSelection").style.display = "none";
-            document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);  // Cargar tickets con permisos de admin
-            cargarEstadisticas();
-        })
-        .catch((error) => {
-            console.error("Error en la autenticación de administrador: ", error);
-            alert("Error en la autenticación. Verifique sus credenciales.");
-        });
+    document.getElementById("roleSelection").style.display = "none";
+    document.getElementById("adminInterface").style.display = "block";
+    mostrarTickets(true);  // Cargar tickets con permisos de admin
+    cargarEstadisticas();
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
@@ -44,7 +34,7 @@ document.getElementById("userLogin").addEventListener("click", () => {
 });
 
 // Botón para regresar a la selección de roles
-document.getElementById("backToRoleSelection")?.addEventListener("click", () => {
+document.getElementById("backToRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
@@ -81,7 +71,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     try {
         let imagenURL = "";
         if (imagenFile) {
-            const storageRef = ref(getStorage(app), `tickets/${consecutivo}_${imagenFile.name}`);
+            const storageRef = ref(storage, `tickets/${consecutivo}_${imagenFile.name}`);
             await uploadBytes(storageRef, imagenFile);
             imagenURL = await getDownloadURL(storageRef);
         }
