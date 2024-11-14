@@ -33,9 +33,13 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
-// Botón para regresar a la selección de roles
-document.getElementById("backToRoleSelection").addEventListener("click", () => {
+// Botones para regresar a la selección de roles
+document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
 });
@@ -106,7 +110,7 @@ function mostrarTickets(isAdmin) {
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            console.log("Datos del ticket:", ticket); // Log para verificar los datos de cada ticket
+            console.log("Datos del ticket:", ticket);
             const row = document.createElement("tr");
 
             row.innerHTML = `
