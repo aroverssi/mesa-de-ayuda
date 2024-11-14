@@ -15,6 +15,18 @@
         <!-- Interfaz de Selección de Rol -->
         <div id="roleSelection" class="card p-4 shadow-sm mb-5">
             <h3>Selecciona tu rol</h3>
+            <!-- Campos de inicio de sesión para el administrador -->
+            <div id="adminLoginSection" style="display: none;">
+                <div class="form-group">
+                    <label for="adminEmail">Correo Electrónico</label>
+                    <input type="email" id="adminEmail" class="form-control" placeholder="Correo Electrónico" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Contraseña</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Contraseña" required>
+                </div>
+                <button id="adminSubmit" class="btn btn-primary">Iniciar Sesión como Administrador</button>
+            </div>
             <button id="adminLogin" class="btn btn-primary">Administrador</button>
             <button id="userLogin" class="btn btn-secondary">Usuario</button>
         </div>
