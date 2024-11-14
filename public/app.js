@@ -105,14 +105,14 @@ function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
     // Obtener valores de filtro
-    const usuarioFiltro = document.getElementById("filtroUsuario")?.value || "";
-    const companyFiltro = document.getElementById("filtroCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById("filtroFechaInicio")?.value || "";
-    const fechaFinFiltro = document.getElementById("filtroFechaFin")?.value || "";
+    const estadoFiltro = document.getElementById(isAdmin ? "filtroEstadoAdmin" : "filtroEstadoUsuario")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "filtroCompanyAdmin" : "filtroCompanyUsuario")?.value || "";
+    const fechaInicioFiltro = document.getElementById(isAdmin ? "filtroFechaInicioAdmin" : "filtroFechaInicioUsuario")?.value || "";
+    const fechaFinFiltro = document.getElementById(isAdmin ? "filtroFechaFinAdmin" : "filtroFechaFinUsuario")?.value || "";
 
     // Construir la consulta de Firestore con los filtros aplicados
     let consulta = collection(db, "tickets");
-    if (usuarioFiltro) consulta = query(consulta, where("usuario", "==", usuarioFiltro));
+    if (estadoFiltro) consulta = query(consulta, where("estado", "==", estadoFiltro));
     if (companyFiltro) consulta = query(consulta, where("company", "==", companyFiltro));
     if (fechaInicioFiltro) consulta = query(consulta, where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinFiltro) consulta = query(consulta, where("fechaApertura", "<=", new Date(fechaFinFiltro)));
@@ -131,7 +131,7 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.descripcion}</td>
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
-                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En proceso"}</td>
                 ${isAdmin ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : "<td></td>"}
             `;
 
@@ -186,12 +186,6 @@ function cargarEstadisticas() {
 }
 
 // Event listeners para aplicar filtros
-document.getElementById("filtroUsuario")?.addEventListener("change", () => mostrarTickets(false));
-document.getElementById("filtroCompany")?.addEventListener("change", () => mostrarTickets(false));
-document.getElementById("filtroFechaInicio")?.addEventListener("change", () => mostrarTickets(false));
-document.getElementById("filtroFechaFin")?.addEventListener("change", () => mostrarTickets(false));
+document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
+document
 
-document.getElementById("filtroUsuarioAdmin")?.addEventListener("change", () => mostrarTickets(true));
-document.getElementById("filtroCompanyAdmin")?.addEventListener("change", () => mostrarTickets(true));
-document.getElementById("filtroFechaInicioAdmin")?.addEventListener("change", () => mostrarTickets(true));
-document.getElementById("filtroFechaFinAdmin")?.addEventListener("change", () => mostrarTickets(true));
