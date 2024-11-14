@@ -19,36 +19,92 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Manejo de la selección de rol (sin autenticación)
+document.getElementById("adminLogin").addEventListener("click", () => {
+    document.getElementById("roleSelection").style.display = "none";
+    document.getElementById("adminInterface").style.display = "block";
+    mostrarTickets(true);  // Cargar tickets con permisos de admin
+    cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+});
+
+document.getElementById("userLogin").addEventListener("click", () => {
+    document.getElementById("roleSelection").style.display = "none";
+    document.getElementById("userInterface").style.display = "block";
+    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+});
+
+// Botón para regresar a la selección de roles
+document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
+    document.getElementById("userInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+// Función para obtener el número de ticket consecutivo
+async function obtenerConsecutivo() {
+    const docRef = doc(db, "config", "consecutivoTicket");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const currentConsecutivo = docSnap.data().consecutivo;
+        await updateDoc(docRef, { consecutivo: increment(1) });
+        return currentConsecutivo + 1;
+    } else {
+        await setDoc(docRef, { consecutivo: 1 });
+        return 1;
+    }
+}
+
+// Función de envío de ticket
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById("usuario").value;
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const teamviewerId = document.getElementById("teamviewer_id").value || "";
+    const password = document.getElementById("password").value || "";
+    const imagenFile = document.getElementById("imagen").files[0];
+
+    const consecutivo = await obtenerConsecutivo();
+
+    try {
+        let imagenURL = "";
+        if (imagenFile) {
+            const storageRef = ref(storage, `tickets/${consecutivo}_${imagenFile.name}`);
+            await uploadBytes(storageRef, imagenFile);
+            imagenURL = await getDownloadURL(storageRef);
+        }
+
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId,
+            password,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+            fechaCierre: null,
+            consecutivo,
+            imagenURL
+        });
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
+});
+
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-    
-    // Obtener valores de filtro
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
 
-    // Construir la consulta de Firestore con filtros dinámicos
-    let consulta = collection(db, "tickets");
-    let filtros = [];
-
-    // Agregar filtros según los valores seleccionados
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaFiltro) {
-        const fechaInicio = new Date(fechaFiltro);
-        const fechaFin = new Date(fechaFiltro);
-        fechaFin.setDate(fechaFin.getDate() + 1); // Para incluir todo el día seleccionado
-        filtros.push(where("fechaApertura", ">=", fechaInicio));
-        filtros.push(where("fechaApertura", "<", fechaFin));
-    }
-
-    // Agregar el orden cronológico a la consulta
-    filtros.push(orderBy("fechaApertura", "asc"));
-
-    // Ejecutar la consulta con los filtros aplicados
-    const consultaFinal = query(consulta, ...filtros);
-    onSnapshot(consultaFinal, (snapshot) => {
+    onSnapshot(query(collection(db, "tickets"), orderBy("fechaApertura", "asc")), (snapshot) => {
         ticketTable.innerHTML = "";
 
         snapshot.forEach((doc) => {
@@ -88,6 +144,7 @@ async function ejecutarCambioEstado(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
+        // Actualizar el estado en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             fechaCierre: fechaCierre,
