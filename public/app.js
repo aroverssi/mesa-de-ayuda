@@ -33,6 +33,17 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
+// Botones para regresar a la selección de roles
+document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
+    document.getElementById("userInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
