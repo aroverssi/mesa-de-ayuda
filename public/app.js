@@ -33,7 +33,7 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
-// Botones para regresar a la selección de roles
+// Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
@@ -110,7 +110,7 @@ function mostrarTickets(isAdmin) {
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            console.log("Datos del ticket:", ticket);
+            console.log("Datos del ticket:", ticket); // Log para verificar los datos de cada ticket
             const row = document.createElement("tr");
 
             row.innerHTML = `
@@ -121,7 +121,7 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                ${isAdmin ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : ""}
+                ${isAdmin ? `<td><button class="btn btn-sm btn-primary" onclick="cambiarEstado('${doc.id}', '${ticket.estado}')">Cambiar Estado</button></td>` : "<td></td>"}
             `;
 
             ticketTable.appendChild(row);
@@ -173,3 +173,4 @@ function cargarEstadisticas() {
         `;
     });
 }
+
