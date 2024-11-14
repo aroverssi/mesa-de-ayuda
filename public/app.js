@@ -5,7 +5,7 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSy...", // Completa el apiKey
+    apiKey: "AIzaSy...",  // Asegúrate de completar el apiKey 
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -25,20 +25,11 @@ document.getElementById("adminLogin").addEventListener("click", () => {
     const adminPassword = prompt("Ingrese la contraseña:");
 
     signInWithEmailAndPassword(auth, adminEmail, adminPassword)
-        .then(async (userCredential) => {
-            const uid = userCredential.user.uid;
-
-            // Verificar si el usuario es admin en Firestore
-            const roleDoc = await getDoc(doc(db, "roles", uid));
-            if (roleDoc.exists() && roleDoc.data().role === "admin") {
-                document.getElementById("roleSelection").style.display = "none";
-                document.getElementById("adminInterface").style.display = "block";
-                mostrarTickets(true); // Mostrar tickets con permisos de admin
-                cargarEstadisticas();
-            } else {
-                alert("No tienes permisos de administrador.");
-                auth.signOut(); // Cerrar sesión si no es admin
-            }
+        .then(() => {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
+            mostrarTickets(true);  // Cargar tickets con permisos de admin
+            cargarEstadisticas();
         })
         .catch((error) => {
             console.error("Error en la autenticación de administrador: ", error);
@@ -49,7 +40,70 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false); // Mostrar tickets para usuarios normales
+    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+});
+
+// Botón para regresar a la selección de roles
+document.getElementById("backToRoleSelection")?.addEventListener("click", () => {
+    document.getElementById("userInterface").style.display = "none";
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+// Función para obtener el número de ticket consecutivo
+async function obtenerConsecutivo() {
+    const docRef = doc(db, "config", "consecutivoTicket");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const currentConsecutivo = docSnap.data().consecutivo;
+        await updateDoc(docRef, { consecutivo: increment(1) });
+        return currentConsecutivo + 1;
+    } else {
+        await setDoc(docRef, { consecutivo: 1 });
+        return 1;
+    }
+}
+
+// Función de envío de ticket
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById("usuario").value;
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const teamviewerId = document.getElementById("teamviewer_id").value || "";
+    const password = document.getElementById("password").value || "";
+    const imagenFile = document.getElementById("imagen").files[0];
+
+    const consecutivo = await obtenerConsecutivo();
+
+    try {
+        let imagenURL = "";
+        if (imagenFile) {
+            const storageRef = ref(getStorage(app), `tickets/${consecutivo}_${imagenFile.name}`);
+            await uploadBytes(storageRef, imagenFile);
+            imagenURL = await getDownloadURL(storageRef);
+        }
+
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId,
+            password,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+            fechaCierre: null,
+            consecutivo,
+            imagenURL
+        });
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
 });
 
 // Función para mostrar los tickets
@@ -80,7 +134,7 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para cambiar el estado del ticket (solo disponible para el administrador)
+// Función para cambiar el estado del ticket
 async function cambiarEstado(ticketId, estadoActual) {
     const nuevoEstado = estadoActual === "pendiente" ? "cerrado" : "pendiente";
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
