@@ -22,11 +22,11 @@
         <!-- Interfaz de Usuario y Tablero de Tickets Compartido -->
         <div id="userInterface" style="display: none;">
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            
             <!-- Formulario de Envío de Ticket -->
             <div class="card p-4 shadow-sm mb-5">
                 <h3>Enviar un Ticket</h3>
                 <form id="ticketForm" autocomplete="off">
-                    <!-- Campos de formulario -->
                     <div class="form-group">
                         <label for="usuario">Nombre</label>
                         <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
@@ -109,6 +109,8 @@
 
         <!-- Interfaz de Administrador -->
         <div id="adminInterface" style="display: none;">
+            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            
             <!-- Filtros para Administrador -->
             <div class="filters mb-4">
                 <h4>Filtrar Tickets</h4>
@@ -153,7 +155,6 @@
             <ul id="adminStats" class="list-group mt-3">
                 <!-- Estadísticas del administrador se cargarán aquí -->
             </ul>
-            <button id="backToAdminRoleSelection" class="btn btn-secondary mt-3">Volver</button>
         </div>
     </div>
 </body>
