@@ -23,6 +23,7 @@ const storage = getStorage(app);
 document.getElementById("adminLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("adminInterface").style.display = "block";
+    console.log("Admin mode activated");
     mostrarTickets(true);  // Cargar tickets con permisos de admin
     cargarEstadisticas();
 });
@@ -30,6 +31,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
+    console.log("User mode activated");
     mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
@@ -38,6 +40,7 @@ document.getElementById("backToRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
+    console.log("Returning to role selection");
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -98,7 +101,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
 // Función para mostrar los tickets
 function mostrarTickets(isAdmin) {
-    console.log("Modo administrador:", isAdmin); // Confirmación en consola
+    console.log("Mostrando tickets. Modo admin:", isAdmin);  // Log para depurar
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
@@ -109,6 +112,7 @@ function mostrarTickets(isAdmin) {
             const ticket = doc.data();
             const row = document.createElement("tr");
 
+            // Construimos la fila de la tabla
             row.innerHTML = `
                 <td>${ticket.consecutivo}</td>
                 <td>${ticket.usuario}</td>
