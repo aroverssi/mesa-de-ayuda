@@ -98,6 +98,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
 // Función para mostrar los tickets
 function mostrarTickets(isAdmin) {
+    console.log("Modo administrador:", isAdmin); // Confirmación en consola
     const ticketsRef = collection(db, "tickets");
     const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
