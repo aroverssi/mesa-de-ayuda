@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -14,17 +15,38 @@ const firebaseConfig = {
     measurementId: "G-0KBEFHH7P9"
 };
 
-// Inicializar Firebase, Firestore y Storage
+// Inicializar Firebase, Firestore, Storage y Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
-// Manejo de la selección de rol (sin autenticación)
-document.getElementById("adminLogin").addEventListener("click", () => {
-    document.getElementById("roleSelection").style.display = "none";
-    document.getElementById("adminInterface").style.display = "block";
-    mostrarTickets(true);  // Cargar tickets con permisos de admin
-    cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+// Función para verificar el rol del usuario actual
+async function verificarRolAdmin(uid) {
+    const docRef = doc(db, "roles", uid);
+    const docSnap = await getDoc(docRef);
+
+    return docSnap.exists() && docSnap.data().role === "admin";
+}
+
+// Manejo de la selección de rol (con autenticación)
+document.getElementById("adminLogin").addEventListener("click", async () => {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const esAdmin = await verificarRolAdmin(user.uid);
+            if (esAdmin) {
+                document.getElementById("roleSelection").style.display = "none";
+                document.getElementById("adminInterface").style.display = "block";
+                mostrarTickets(true);  // Cargar tickets con permisos de admin
+                cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+            } else {
+                alert("No tienes permiso para acceder a esta sección.");
+                auth.signOut();  // Opcional: Cerrar sesión si no es admin
+            }
+        } else {
+            alert("Inicia sesión para acceder.");
+        }
+    });
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
