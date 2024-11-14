@@ -102,8 +102,9 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
 // Función para mostrar los tickets
 function mostrarTickets(isAdmin) {
+    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
     const ticketsRef = collection(db, "tickets");
-    const ticketTable = document.getElementById("ticketTable").getElementsByTagName("tbody")[0];
 
     onSnapshot(query(ticketsRef, orderBy("fechaApertura", "asc")), (snapshot) => {
         ticketTable.innerHTML = "";
@@ -173,4 +174,3 @@ function cargarEstadisticas() {
         `;
     });
 }
-
