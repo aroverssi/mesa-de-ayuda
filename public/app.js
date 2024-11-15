@@ -104,7 +104,24 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    onSnapshot(query(collection(db, "tickets"), orderBy("fechaApertura", "asc")), (snapshot) => {
+    // Obtener valores de filtro
+    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
+
+    // Crear una consulta base de Firestore
+    let consulta = collection(db, "tickets");
+    const filtros = [];
+
+    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
+    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
+    if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
+
+    // Añadir la ordenación por fecha de apertura
+    filtros.push(orderBy("fechaApertura", "asc"));
+    consulta = query(consulta, ...filtros);
+
+    onSnapshot(consulta, (snapshot) => {
         ticketTable.innerHTML = "";
 
         snapshot.forEach((doc) => {
