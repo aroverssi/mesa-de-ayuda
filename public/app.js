@@ -21,42 +21,18 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-// Función para enviar correo de notificación
-async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo) {
-    const correoContenido = `
-        Hola ${usuario},
-
-        Tu ticket ha sido creado exitosamente. El número de tu ticket es: ${consecutivo}.
-
-        Información del Ticket:
-        - Compañía: ${company}
-        - Descripción del problema: ${descripcion}
-        - Teléfono o Extensión: ${telefono}
-        - ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
-        - Contraseña TW: ${password}
-
-        Gracias por contactarnos.
-
-        Saludos,
-        Departamento TI
-    `;
-
-    // Simulación de envío de correo (este debería ser el código para enviar el correo real)
-    console.log("Correo enviado a:", email);
-    console.log(correoContenido);
-}
-
-// Manejo de la selección de rol y botón de regreso con estilo inicial
+// Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
     const password = prompt("Ingrese su contraseña:");
 
     signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
+        .then((userCredential) => {
+            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);
-            cargarEstadisticas();
+            mostrarTickets(true);  // Cargar tickets con permisos de admin
+            cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -67,9 +43,10 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);
+    mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
+// Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
@@ -78,7 +55,7 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();
+    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -105,7 +82,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
-    const telefono = document.getElementById("telefono").value || "";
     const imagenFile = document.getElementById("imagen").files[0];
 
     const consecutivo = await obtenerConsecutivo();
@@ -118,27 +94,20 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             imagenURL = await getDownloadURL(storageRef);
         }
 
-        const ticketData = {
+        await addDoc(collection(db, "tickets"), {
             usuario,
             company,
             email,
             descripcion,
             teamviewerId,
             password,
-            telefono,
             estado: "pendiente",
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
             imagenURL,
-            comentarios: ""
-        };
-
-        await addDoc(collection(db, "tickets"), ticketData);
-
-        // Enviar notificación por correo con toda la información
-        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo);
-
+            comentarios: ""  // Campo para almacenar comentarios
+        });
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
@@ -146,3 +115,115 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
+// Función para mostrar los tickets con filtros y orden cronológico
+function mostrarTickets(isAdmin) {
+    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
+    // Obtener valores de filtro
+    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
+
+    // Crear una consulta base de Firestore
+    let consulta = collection(db, "tickets");
+    const filtros = [];
+
+    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
+    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
+    if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
+
+    // Añadir la ordenación por fecha de apertura
+    filtros.push(orderBy("fechaApertura", "asc"));
+    consulta = query(consulta, ...filtros);
+
+    onSnapshot(consulta, (snapshot) => {
+        ticketTable.innerHTML = "";
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${ticket.consecutivo}</td>
+                <td>${ticket.usuario}</td>
+                <td>${ticket.company}</td>
+                <td>${ticket.descripcion}</td>
+                <td>${ticket.estado}</td>
+                <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
+                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                <td>${ticket.comentarios || "Sin comentarios"}</td>
+                ${
+                    isAdmin 
+                    ? `<td>
+                          <select id="estadoSelect_${doc.id}">
+                              <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                              <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                              <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                          </select>
+                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                       </td>` 
+                    : ""
+                }
+            `;
+
+            ticketTable.appendChild(row);
+        });
+    });
+}
+
+// Función para actualizar el estado y los comentarios en Firebase
+async function actualizarTicket(ticketId) {
+    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
+    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
+    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
+
+    try {
+        // Actualizar el estado y comentarios en Firestore
+        await updateDoc(doc(db, "tickets", ticketId), {
+            estado: nuevoEstado,
+            comentarios: nuevoComentario,
+            fechaCierre: fechaCierre,
+        });
+
+        alert(`Ticket actualizado con éxito.`);
+    } catch (error) {
+        console.error("Error al actualizar el ticket: ", error);
+    }
+}
+
+// Función para cargar estadísticas (solo para el administrador)
+function cargarEstadisticas() {
+    const statsList = document.getElementById("adminStats");
+    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
+
+    onSnapshot(collection(db, "tickets"), (snapshot) => {
+        totalTickets = snapshot.size;
+        totalCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado") {
+                totalCerrados++;
+                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
+        statsList.innerHTML = `
+            <li>Total de Tickets: ${totalTickets}</li>
+            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
+            <li>Tickets Cerrados: ${totalCerrados}</li>
+            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+        `;
+    });
+}
+
+// Event listeners para aplicar filtros
+document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
+document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
+
+// Exportar funciones globales para acceso desde el HTML
+window.actualizarTicket = actualizarTicket;
