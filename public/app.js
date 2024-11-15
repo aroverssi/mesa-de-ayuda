@@ -22,16 +22,18 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Función para enviar correo de notificación
-async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, consecutivo) {
+async function enviarNotificacionCorreo(email, usuario, company, descripcion, teamviewerId, password, telefono, consecutivo) {
     const correoContenido = `
         Hola ${usuario},
 
         Tu ticket ha sido creado exitosamente. El número de tu ticket es: ${consecutivo}.
 
-        Descripción del problema: ${descripcion}
-        Teléfono o Extensión: ${telefono}
-        ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
-        Contraseña TW: ${password}
+        Información del Ticket:
+        - Compañía: ${company}
+        - Descripción del problema: ${descripcion}
+        - Teléfono o Extensión: ${telefono}
+        - ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
+        - Contraseña TW: ${password}
 
         Gracias por contactarnos.
 
@@ -39,7 +41,7 @@ async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerI
         Departamento TI
     `;
 
-    // Aquí se enviaría el correo. En este caso, lo estamos simulando con console.log
+    // Simulación del envío de correo (usando console.log)
     console.log("Correo enviado a:", email);
     console.log(correoContenido);
 }
@@ -135,7 +137,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         await addDoc(collection(db, "tickets"), ticketData);
 
         // Enviar notificación por correo
-        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, consecutivo);
+        enviarNotificacionCorreo(email, usuario, company, descripcion, teamviewerId, password, telefono, consecutivo);
 
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
