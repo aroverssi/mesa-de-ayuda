@@ -1,6 +1,7 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -14,34 +15,47 @@ const firebaseConfig = {
     measurementId: "G-0KBEFHH7P9"
 };
 
-// Inicializar Firebase, Firestore y Storage
+// Inicializar Firebase, Firestore, Storage y Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
-// Manejo de la selección de rol (sin autenticación)
-document.getElementById("adminLogin").addEventListener("click", () => {
-    document.getElementById("roleSelection").style.display = "none";
-    document.getElementById("adminInterface").style.display = "block";
-    mostrarTickets(true);  // Cargar tickets con permisos de admin
-    cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+// Función para verificar el rol de administrador
+async function verificarRolAdmin(uid) {
+    const docRef = doc(db, "roles", uid);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() && docSnap.data().role === "admin";
+}
+
+// Manejo de la selección de rol y autenticación
+document.getElementById("adminLogin").addEventListener("click", async () => {
+    const email = prompt("Ingresa tu correo de administrador:");
+    const password = prompt("Ingresa tu contraseña:");
+
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const esAdmin = await verificarRolAdmin(user.uid);
+        if (esAdmin) {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
+            mostrarTickets(true);
+            cargarEstadisticas();
+        } else {
+            alert("No tienes permiso para acceder a esta sección.");
+            await auth.signOut();
+        }
+    } catch (error) {
+        alert("Error de inicio de sesión: " + error.message);
+    }
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
-});
-
-// Botón para regresar a la selección de roles
-document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
-    document.getElementById("userInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
-});
-
-document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
-    document.getElementById("adminInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
+    mostrarTickets(false);
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -104,24 +118,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    // Obtener valores de filtro
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
-
-    // Crear una consulta base de Firestore
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
-
-    // Añadir la ordenación por fecha de apertura
-    filtros.push(orderBy("fechaApertura", "asc"));
-    consulta = query(consulta, ...filtros);
-
-    onSnapshot(consulta, (snapshot) => {
+    onSnapshot(query(collection(db, "tickets"), orderBy("fechaApertura", "asc")), (snapshot) => {
         ticketTable.innerHTML = "";
 
         snapshot.forEach((doc) => {
@@ -217,3 +214,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.ejecutarCambioEstado = ejecutarCambioEstado;
+
