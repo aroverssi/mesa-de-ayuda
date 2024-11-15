@@ -22,7 +22,7 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Función para enviar correo de notificación
-async function enviarNotificacionCorreo(email, usuario, company, descripcion, teamviewerId, password, telefono, consecutivo) {
+async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo) {
     const correoContenido = `
         Hola ${usuario},
 
@@ -41,7 +41,7 @@ async function enviarNotificacionCorreo(email, usuario, company, descripcion, te
         Departamento TI
     `;
 
-    // Simulación del envío de correo (usando console.log)
+    // Simulación de envío de correo (este debería ser el código para enviar el correo real)
     console.log("Correo enviado a:", email);
     console.log(correoContenido);
 }
@@ -136,8 +136,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
         await addDoc(collection(db, "tickets"), ticketData);
 
-        // Enviar notificación por correo
-        enviarNotificacionCorreo(email, usuario, company, descripcion, teamviewerId, password, telefono, consecutivo);
+        // Enviar notificación por correo con toda la información
+        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo);
 
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
@@ -146,111 +146,3 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar los tickets con filtros y orden cronológico
-function mostrarTickets(isAdmin) {
-    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
-
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
-
-    filtros.push(orderBy("fechaApertura", "asc"));
-    consulta = query(consulta, ...filtros);
-
-    onSnapshot(consulta, (snapshot) => {
-        ticketTable.innerHTML = "";
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td>${ticket.consecutivo}</td>
-                <td>${ticket.usuario}</td>
-                <td>${ticket.company}</td>
-                <td>${ticket.descripcion}</td>
-                <td>${ticket.estado}</td>
-                <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
-                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                <td>${ticket.comentarios || "Sin comentarios"}</td>
-                ${
-                    isAdmin 
-                    ? `<td>
-                          <select id="estadoSelect_${doc.id}">
-                              <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                              <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                              <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                          </select>
-                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                       </td>` 
-                    : ""
-                }
-            `;
-
-            ticketTable.appendChild(row);
-        });
-    });
-}
-
-// Función para actualizar el estado y los comentarios en Firebase
-async function actualizarTicket(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
-
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            comentarios: nuevoComentario,
-            fechaCierre: fechaCierre,
-        });
-
-        alert(`Ticket actualizado con éxito.`);
-    } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
-    }
-}
-
-// Función para cargar estadísticas (solo para el administrador)
-function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        totalTickets = snapshot.size;
-        totalCerrados = 0;
-        sumaResolucion = 0;
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            if (ticket.estado === "cerrado") {
-                totalCerrados++;
-                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                sumaResolucion += tiempoResolucion;
-            }
-        });
-
-        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
-        statsList.innerHTML = `
-            <li>Total de Tickets: ${totalTickets}</li>
-            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-            <li>Tickets Cerrados: ${totalCerrados}</li>
-            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-        `;
-    });
-}
-
-// Event listeners para aplicar filtros
-document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
-document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
-
-// Exportar funciones globales para acceso desde el HTML
-window.actualizarTicket = actualizarTicket;
