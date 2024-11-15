@@ -21,6 +21,13 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
+// Función para mostrar la pantalla de selección de rol con estilo original
+function mostrarPantallaSeleccionRol() {
+    document.getElementById("roleSelection").style.display = "block";
+    document.getElementById("adminLogin").classList.add("btn-primary");
+    document.getElementById("userLogin").classList.add("btn-secondary");
+}
+
 // Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
@@ -49,12 +56,12 @@ document.getElementById("userLogin").addEventListener("click", () => {
 // Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
+    mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
 });
 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
+    mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
     auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
 });
 
