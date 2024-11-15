@@ -6,7 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
