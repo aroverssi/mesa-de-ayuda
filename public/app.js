@@ -3,6 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import { Chart } from "https://cdn.jsdelivr.net/npm/chart.js"; // Importar Chart.js para gráficos
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -46,17 +47,16 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);  // Cargar tickets sin permisos de admin
 });
 
-// Botón para regresar a la selección de roles
-document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
+// Botón para regresar a la selección de roles con visualización inicial correcta
+function regresarASeleccionRol() {
     document.getElementById("userInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
-});
-
-document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
     auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
-});
+}
+
+document.getElementById("backToUserRoleSelection").addEventListener("click", regresarASeleccionRol);
+document.getElementById("backToAdminRoleSelection").addEventListener("click", regresarASeleccionRol);
 
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
@@ -79,6 +79,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const usuario = document.getElementById("usuario").value;
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value;
+    const telefono = document.getElementById("telefono").value || "";  // Campo opcional de Teléfono/Extensión
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
@@ -98,6 +99,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             usuario,
             company,
             email,
+            telefono,
             descripcion,
             teamviewerId,
             password,
@@ -160,10 +162,10 @@ function mostrarTickets(isAdmin) {
                               <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
                               <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
                           </select>
-                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                          <input type="text" id="comentario_${doc.id}" placeholder="Agregar comentario" class="form-control mb-2"/>
                           <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
                        </td>` 
-                    : ""
+                    : "<td></td>"
                 }
             `;
 
@@ -172,14 +174,14 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para actualizar el estado y los comentarios en Firebase
+// Función para ejecutar el cambio de estado en Firebase y agregar comentario
 async function actualizarTicket(ticketId) {
     const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
+    const nuevoComentario = document.getElementById(`comentario_${ticketId}`).value || "";
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado y comentarios en Firestore
+        // Actualizar el estado y comentario en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             comentarios: nuevoComentario,
@@ -192,32 +194,32 @@ async function actualizarTicket(ticketId) {
     }
 }
 
-// Función para cargar estadísticas (solo para el administrador)
+// Función para cargar estadísticas y visualizar en gráfico
 function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
+    const ctx = document.getElementById("adminChart").getContext("2d");
+    const stats = {}; // Objeto para almacenar los datos de estadísticas por mes
 
     onSnapshot(collection(db, "tickets"), (snapshot) => {
-        totalTickets = snapshot.size;
-        totalCerrados = 0;
-        sumaResolucion = 0;
-
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            if (ticket.estado === "cerrado") {
-                totalCerrados++;
-                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                sumaResolucion += tiempoResolucion;
-            }
+            const month = new Date(ticket.fechaApertura.seconds * 1000).getMonth();
+            stats[month] = (stats[month] || 0) + 1;
         });
 
-        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
-        statsList.innerHTML = `
-            <li>Total de Tickets: ${totalTickets}</li>
-            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-            <li>Tickets Cerrados: ${totalCerrados}</li>
-            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-        `;
+        // Crear gráfico de estadísticas
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: Object.keys(stats).map(month => `Mes ${+month + 1}`),
+                datasets: [{
+                    label: "Tickets por mes",
+                    data: Object.values(stats),
+                    backgroundColor: "rgba(75, 192, 192, 0.2)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1
+                }]
+            }
+        });
     });
 }
 
@@ -227,4 +229,3 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
-
