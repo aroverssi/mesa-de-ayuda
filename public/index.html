@@ -52,7 +52,7 @@
                         <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="teamviewer_id">ID TeamViewer</label>
+                        <label for="teamviewer_id">ID TeamViewer <small>(En caso de necesitar asistencia remota)</small></label>
                         <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
                     </div>
                     <div class="form-group">
@@ -67,28 +67,7 @@
                 </form>
             </div>
 
-            <!-- Filtros para Usuario -->
-            <div class="filters mb-4">
-                <h4>Filtrar Tickets</h4>
-                <select id="userFilterCompany" class="form-control mb-2">
-                    <option value="">Filtrar por Compañía</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="userFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
-                <select id="userFilterStatus" class="form-control">
-                    <option value="">Filtrar por Estado</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="cerrado">Cerrado</option>
-                    <option value="en progreso">En Progreso</option>
-                </select>
-                <button id="userFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
-            </div>
-
+            <!-- Tablero de Tickets para Usuario -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
                 <thead>
@@ -97,10 +76,12 @@
                         <th>Usuario</th>
                         <th>Compañía</th>
                         <th>Descripción</th>
+                        <th>ID TeamViewer</th>
+                        <th>Contraseña TW</th>
                         <th>Estado</th>
-                        <th>Fecha</th>
+                        <th>Fecha de Inicio</th>
                         <th>Fecha de Resolución</th>
-                        <th>Acciones</th>
+                        <th>Comentarios</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -111,28 +92,7 @@
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
-            <!-- Filtros para Administrador -->
-            <div class="filters mb-4">
-                <h4>Filtrar Tickets</h4>
-                <select id="adminFilterCompany" class="form-control mb-2">
-                    <option value="">Filtrar por Compañía</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="adminFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
-                <select id="adminFilterStatus" class="form-control">
-                    <option value="">Filtrar por Estado</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="cerrado">Cerrado</option>
-                    <option value="en progreso">En Progreso</option>
-                </select>
-                <button id="adminFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
-            </div>
-
+            <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
                 <thead>
@@ -141,15 +101,16 @@
                         <th>Usuario</th>
                         <th>Compañía</th>
                         <th>Descripción</th>
+                        <th>ID TeamViewer</th>
+                        <th>Contraseña TW</th>
                         <th>Estado</th>
-                        <th>Fecha</th>
+                        <th>Fecha de Inicio</th>
                         <th>Fecha de Resolución</th>
+                        <th>Comentarios</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Filas de tickets cargadas dinámicamente desde app.js -->
-                </tbody>
+                <tbody></tbody>
             </table>
             <h3 class="mt-5">Estadísticas</h3>
             <ul id="adminStats" class="list-group mt-3">
