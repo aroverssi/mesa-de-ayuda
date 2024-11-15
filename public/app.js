@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, addDoc, updateDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -23,7 +23,7 @@ const auth = getAuth(app);
 
 // Función para verificar el rol del usuario actual
 async function verificarRolAdmin(uid) {
-    console.log("Verificando rol de usuario:", uid);  // Mensaje para depuración
+    console.log("Verificando rol de usuario:", uid); // Depuración
     const docRef = doc(db, "roles", uid);
     const docSnap = await getDoc(docRef);
     return docSnap.exists() && docSnap.data().role === "admin";
@@ -32,7 +32,7 @@ async function verificarRolAdmin(uid) {
 // Función para iniciar sesión como administrador
 async function iniciarSesion(email, password) {
     try {
-        console.log("Intentando iniciar sesión para:", email);  // Mensaje para depuración
+        console.log("Intentando iniciar sesión para:", email); // Depuración
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         const esAdmin = await verificarRolAdmin(user.uid);
@@ -46,10 +46,10 @@ async function iniciarSesion(email, password) {
         } else {
             console.log("Usuario no tiene rol de administrador");
             alert("No tienes permiso para acceder a esta sección.");
-            await auth.signOut();  // Cerrar sesión si no es admin
+            await auth.signOut(); // Cerrar sesión si no es admin
         }
     } catch (error) {
-        console.error("Error de inicio de sesión:", error.message);  // Mensaje para depuración
+        console.error("Error de inicio de sesión:", error.message); // Depuración
         alert("Error de inicio de sesión: " + error.message);
     }
 }
@@ -78,7 +78,7 @@ document.getElementById("ticketForm").addEventListener("submit", async (event) =
         const teamviewer_id = document.getElementById("teamviewer_id").value;
         const password = document.getElementById("password").value;
         const imagen = document.getElementById("imagen").files[0];
-        
+
         // Subir imagen si está disponible
         let imagenUrl = "";
         if (imagen) {
@@ -87,8 +87,15 @@ document.getElementById("ticketForm").addEventListener("submit", async (event) =
             imagenUrl = await getDownloadURL(storageRef);
         }
 
+        // Obtener el consecutivo y actualizar
+        const configRef = doc(db, "config", "ticketCounter");
+        await updateDoc(configRef, { count: increment(1) });
+        const configSnap = await getDoc(configRef);
+        const consecutivo = configSnap.data().count;
+
         // Crear un nuevo ticket en Firestore
         await addDoc(collection(db, "tickets"), {
+            consecutivo,
             usuario,
             company,
             email,
@@ -120,7 +127,7 @@ document.getElementById("backToAdminRoleSelection").addEventListener("click", ()
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
+    
     // Obtener valores de filtro
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
@@ -169,35 +176,6 @@ function mostrarTickets(isAdmin) {
 
             ticketTable.appendChild(row);
         });
-    });
-}
-
-// Función para cargar estadísticas (solo para el administrador)
-function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        totalTickets = snapshot.size;
-        totalCerrados = 0;
-        sumaResolucion = 0;
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            if (ticket.estado === "cerrado") {
-                totalCerrados++;
-                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                sumaResolucion += tiempoResolucion;
-            }
-        });
-
-        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
-        statsList.innerHTML = `
-            <li>Total de Tickets: ${totalTickets}</li>
-            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-            <li>Tickets Cerrados: ${totalCerrados}</li>
-            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-        `;
     });
 }
 
