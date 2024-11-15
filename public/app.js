@@ -22,7 +22,7 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Esperar a que el DOM esté completamente cargado antes de agregar los EventListeners
-document.addEventListener("DOMContentLoaded", function () {
+window.addEventListener("load", function () {
     // Función para verificar el rol de administrador
     async function verificarRolAdmin(uid) {
         const docRef = doc(db, "roles", uid);
