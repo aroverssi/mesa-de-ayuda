@@ -21,6 +21,31 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
+// Función para enviar notificación por correo (simulación)
+async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo, estado = "pendiente") {
+    const correoContenido = `
+        Hola ${usuario},
+
+        Tu ticket ha sido ${estado === "pendiente" ? "creado" : "actualizado"} exitosamente. El número de tu ticket es: ${consecutivo}.
+
+        Información del Ticket:
+        - Compañía: ${company}
+        - Descripción del problema: ${descripcion}
+        - Teléfono o Extensión: ${telefono}
+        - ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
+        - Contraseña TW: ${password}
+        - Estado del Ticket: ${estado}
+
+        Gracias por contactarnos.
+
+        Saludos,
+        Departamento TI
+    `;
+
+    console.log("Correo enviado a:", email);
+    console.log(correoContenido);
+}
+
 // Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
@@ -28,11 +53,10 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);  // Cargar tickets con permisos de admin
-            cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+            mostrarTickets(true);
+            cargarEstadisticas();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -43,7 +67,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+    mostrarTickets(false);
 });
 
 // Botón para regresar a la selección de roles
@@ -55,7 +79,7 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
+    auth.signOut();
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -82,6 +106,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
+    const telefono = document.getElementById("telefono").value || "";
     const imagenFile = document.getElementById("imagen").files[0];
 
     const consecutivo = await obtenerConsecutivo();
@@ -94,20 +119,27 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             imagenURL = await getDownloadURL(storageRef);
         }
 
-        await addDoc(collection(db, "tickets"), {
+        const ticketData = {
             usuario,
             company,
             email,
             descripcion,
             teamviewerId,
             password,
+            telefono,
             estado: "pendiente",
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
             imagenURL,
-            comentarios: ""  // Campo para almacenar comentarios
-        });
+            comentarios: ""
+        };
+
+        await addDoc(collection(db, "tickets"), ticketData);
+
+        // Enviar notificación por correo
+        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo);
+
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
@@ -151,7 +183,6 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                <td>${ticket.comentarios || "Sin comentarios"}</td>
                 ${
                     isAdmin 
                     ? `<td>
@@ -160,10 +191,9 @@ function mostrarTickets(isAdmin) {
                               <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
                               <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
                           </select>
-                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                          <button class="btn btn-sm btn-primary mt-2" onclick="ejecutarCambioEstado('${doc.id}')">Ejecutar</button>
                        </td>` 
-                    : ""
+                    : "<td></td>"
                 }
             `;
 
@@ -172,23 +202,21 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para actualizar el estado y los comentarios en Firebase
-async function actualizarTicket(ticketId) {
+// Función para ejecutar el cambio de estado en Firebase y enviar notificación
+async function ejecutarCambioEstado(ticketId) {
     const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado y comentarios en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
-            comentarios: nuevoComentario,
             fechaCierre: fechaCierre,
         });
 
-        alert(`Ticket actualizado con éxito.`);
+        alert(`Estado del ticket actualizado a: ${nuevoEstado}`);
+        enviarNotificacionCorreo("email_del_usuario", "usuario", "descripcion", "teamviewerId", "password", "telefono", "company", ticketId, nuevoEstado);
     } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
+        console.error("Error al cambiar el estado del ticket: ", error);
     }
 }
 
@@ -226,4 +254,4 @@ document.getElementById("userFilterApply")?.addEventListener("click", () => most
 document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 
 // Exportar funciones globales para acceso desde el HTML
-window.actualizarTicket = actualizarTicket;
+window.ejecutarCambioEstado = ejecutarCambioEstado;
