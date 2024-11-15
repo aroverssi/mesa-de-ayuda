@@ -28,11 +28,10 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);  // Cargar tickets con permisos de admin
-            cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+            mostrarTickets(true);
+            cargarEstadisticas();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -43,7 +42,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+    mostrarTickets(false);
 });
 
 // Botón para regresar a la selección de roles
@@ -55,7 +54,7 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
+    auth.signOut();
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -82,6 +81,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
+    const telefono = document.getElementById("telefono").value || "";
     const imagenFile = document.getElementById("imagen").files[0];
 
     const consecutivo = await obtenerConsecutivo();
@@ -101,13 +101,17 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             descripcion,
             teamviewerId,
             password,
+            telefono,
             estado: "pendiente",
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
             imagenURL,
-            comentarios: ""  // Campo para almacenar comentarios
+            comentarios: ""
         });
+
+        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono);
+
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
@@ -115,16 +119,23 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
+// Función para enviar notificación por correo con nuevos campos
+async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono) {
+    console.log(`Enviando correo a: ${email}`);
+    console.log(`Nombre: ${usuario}`);
+    console.log(`Descripción: ${descripcion}`);
+    console.log(`TeamViewer ID: ${teamviewerId}, Contraseña: ${password}`);
+    console.log(`Teléfono/Extensión: ${telefono}`);
+}
+
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    // Obtener valores de filtro
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
 
-    // Crear una consulta base de Firestore
     let consulta = collection(db, "tickets");
     const filtros = [];
 
@@ -132,7 +143,6 @@ function mostrarTickets(isAdmin) {
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
     if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
 
-    // Añadir la ordenación por fecha de apertura
     filtros.push(orderBy("fechaApertura", "asc"));
     consulta = query(consulta, ...filtros);
 
@@ -179,7 +189,6 @@ async function actualizarTicket(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado y comentarios en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             comentarios: nuevoComentario,
