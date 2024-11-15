@@ -143,21 +143,18 @@ async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerI
         Departamento TI
     `;
 
-    // Aquí se simula el envío de correo, reemplazar con la lógica de envío real si está disponible
     console.log("Correo enviado a:", email);
     console.log(correoContenido);
 }
 
-// Función para mostrar los tickets con filtros y orden cronológico
+// Función para mostrar los tickets con todos los detalles en el tablero de administración
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    // Obtener valores de filtro
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaFiltro = document.getElementById(isAdmin ? "adminFilterDate" : "userFilterDate")?.value || "";
 
-    // Crear una consulta base de Firestore
     let consulta = collection(db, "tickets");
     const filtros = [];
 
@@ -165,7 +162,6 @@ function mostrarTickets(isAdmin) {
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
     if (fechaFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaFiltro)));
 
-    // Añadir la ordenación por fecha de apertura
     filtros.push(orderBy("fechaApertura", "asc"));
     consulta = query(consulta, ...filtros);
 
@@ -180,7 +176,11 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.consecutivo}</td>
                 <td>${ticket.usuario}</td>
                 <td>${ticket.company}</td>
+                <td>${ticket.email}</td>
+                <td>${ticket.telefono}</td>
                 <td>${ticket.descripcion}</td>
+                <td>${ticket.teamviewerId}</td>
+                <td>${ticket.password}</td>
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
@@ -212,7 +212,6 @@ async function actualizarTicket(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado y comentarios en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             comentarios: nuevoComentario,
@@ -260,4 +259,5 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
 
