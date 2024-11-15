@@ -21,41 +21,48 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-// Función para verificar el rol de administrador
-async function verificarRolAdmin(uid) {
-    const docRef = doc(db, "roles", uid);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() && docSnap.data().role === "admin";
-}
-
-// Manejo de la selección de rol y autenticación
-document.getElementById("adminLogin").addEventListener("click", async () => {
-    const email = prompt("Ingresa tu correo de administrador:");
-    const password = prompt("Ingresa tu contraseña:");
-
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        const esAdmin = await verificarRolAdmin(user.uid);
-        if (esAdmin) {
-            document.getElementById("roleSelection").style.display = "none";
-            document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);
-            cargarEstadisticas();
-        } else {
-            alert("No tienes permiso para acceder a esta sección.");
-            await auth.signOut();
-        }
-    } catch (error) {
-        alert("Error de inicio de sesión: " + error.message);
+// Esperar a que el DOM esté completamente cargado antes de agregar los EventListeners
+document.addEventListener("DOMContentLoaded", function () {
+    // Función para verificar el rol de administrador
+    async function verificarRolAdmin(uid) {
+        const docRef = doc(db, "roles", uid);
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists() && docSnap.data().role === "admin";
     }
-});
 
-document.getElementById("userLogin").addEventListener("click", () => {
-    document.getElementById("roleSelection").style.display = "none";
-    document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);
+    // Manejo de la selección de rol y autenticación
+    document.getElementById("adminLogin").addEventListener("click", async () => {
+        const email = prompt("Ingresa tu correo de administrador:");
+        const password = prompt("Ingresa tu contraseña:");
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            const esAdmin = await verificarRolAdmin(user.uid);
+            if (esAdmin) {
+                document.getElementById("roleSelection").style.display = "none";
+                document.getElementById("adminInterface").style.display = "block";
+                mostrarTickets(true);
+                cargarEstadisticas();
+            } else {
+                alert("No tienes permiso para acceder a esta sección.");
+                await auth.signOut();
+            }
+        } catch (error) {
+            alert("Error de inicio de sesión: " + error.message);
+        }
+    });
+
+    document.getElementById("userLogin").addEventListener("click", () => {
+        document.getElementById("roleSelection").style.display = "none";
+        document.getElementById("userInterface").style.display = "block";
+        mostrarTickets(false);
+    });
+
+    // Event listeners para aplicar filtros
+    document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
+    document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -158,17 +165,13 @@ async function ejecutarCambioEstado(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             fechaCierre: fechaCierre,
         });
 
         alert(`Estado del ticket actualizado a: ${nuevoEstado}`);
-        
-        // Llamada a la función de notificación por correo
         enviarNotificacionCorreo(ticketId, nuevoEstado);
-
     } catch (error) {
         console.error("Error al cambiar el estado del ticket: ", error);
     }
@@ -208,10 +211,5 @@ function cargarEstadisticas() {
     });
 }
 
-// Event listeners para aplicar filtros
-document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
-document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
-
 // Exportar funciones globales para acceso desde el HTML
 window.ejecutarCambioEstado = ejecutarCambioEstado;
-
