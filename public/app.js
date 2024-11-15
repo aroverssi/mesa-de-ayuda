@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, updateDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, addDoc, updateDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
@@ -23,6 +23,7 @@ const auth = getAuth(app);
 
 // Función para verificar el rol del usuario actual
 async function verificarRolAdmin(uid) {
+    console.log("Verificando rol de usuario:", uid);  // Mensaje para depuración
     const docRef = doc(db, "roles", uid);
     const docSnap = await getDoc(docRef);
     return docSnap.exists() && docSnap.data().role === "admin";
@@ -31,20 +32,24 @@ async function verificarRolAdmin(uid) {
 // Función para iniciar sesión como administrador
 async function iniciarSesion(email, password) {
     try {
+        console.log("Intentando iniciar sesión para:", email);  // Mensaje para depuración
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         const esAdmin = await verificarRolAdmin(user.uid);
 
         if (esAdmin) {
+            console.log("Usuario autenticado como administrador");
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
             mostrarTickets(true);
             cargarEstadisticas();
         } else {
+            console.log("Usuario no tiene rol de administrador");
             alert("No tienes permiso para acceder a esta sección.");
             await auth.signOut();  // Cerrar sesión si no es admin
         }
     } catch (error) {
+        console.error("Error de inicio de sesión:", error.message);  // Mensaje para depuración
         alert("Error de inicio de sesión: " + error.message);
     }
 }
@@ -60,6 +65,45 @@ document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
     mostrarTickets(false);
+});
+
+// Enviar ticket sin redirigir al usuario
+document.getElementById("ticketForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+        const usuario = document.getElementById("usuario").value;
+        const company = document.getElementById("company").value;
+        const email = document.getElementById("email").value;
+        const descripcion = document.getElementById("descripcion").value;
+        const teamviewer_id = document.getElementById("teamviewer_id").value;
+        const password = document.getElementById("password").value;
+        const imagen = document.getElementById("imagen").files[0];
+        
+        // Subir imagen si está disponible
+        let imagenUrl = "";
+        if (imagen) {
+            const storageRef = ref(storage, `imagenes/${imagen.name}`);
+            await uploadBytes(storageRef, imagen);
+            imagenUrl = await getDownloadURL(storageRef);
+        }
+
+        // Crear un nuevo ticket en Firestore
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewer_id,
+            password,
+            imagenUrl,
+            estado: "pendiente",
+            fechaApertura: new Date()
+        });
+
+        alert("Ticket enviado correctamente.");
+    } catch (error) {
+        console.error("Error al enviar el ticket:", error);
+    }
 });
 
 // Botones para regresar a la selección de roles
@@ -128,29 +172,6 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para ejecutar el cambio de estado en Firebase y enviar notificación
-async function ejecutarCambioEstado(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
-
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            fechaCierre: fechaCierre,
-        });
-
-        alert(`Estado del ticket actualizado a: ${nuevoEstado}`);
-        enviarNotificacionCorreo(ticketId, nuevoEstado);
-    } catch (error) {
-        console.error("Error al cambiar el estado del ticket: ", error);
-    }
-}
-
-// Función para enviar notificación por correo
-async function enviarNotificacionCorreo(ticketId, nuevoEstado) {
-    console.log(`Enviando correo de notificación para ticket ${ticketId} con estado ${nuevoEstado}`);
-}
-
 // Función para cargar estadísticas (solo para el administrador)
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
@@ -179,10 +200,6 @@ function cargarEstadisticas() {
         `;
     });
 }
-
-// Event listeners para aplicar filtros
-document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
-document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 
 // Exportar funciones globales para acceso desde el HTML
 window.ejecutarCambioEstado = ejecutarCambioEstado;
