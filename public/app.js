@@ -1,7 +1,7 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
@@ -20,35 +20,24 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-// Función para verificar el rol de administrador
-async function verificarRolAdmin(uid) {
-    const docRef = doc(db, "roles", uid);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() && docSnap.data().role === "admin";
-}
 
 // Manejo de la selección de rol
-document.getElementById("adminLogin").addEventListener("click", async () => {
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
+document.getElementById("adminLogin").addEventListener("click", () => {
+    const email = prompt("Ingrese su correo de administrador:");
+    const password = prompt("Ingrese su contraseña:");
 
-        const esAdmin = await verificarRolAdmin(user.uid);
-        if (esAdmin) {
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true); // Cargar tickets con permisos de admin
+            mostrarTickets(true);  // Cargar tickets con permisos de admin
             cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
-        } else {
-            alert("No tienes permiso para acceder a esta sección.");
-            await signOut(auth); // Cerrar sesión si no es administrador
-        }
-    } catch (error) {
-        console.error("Error de autenticación:", error);
-        alert("Error al iniciar sesión como administrador.");
-    }
+        })
+        .catch((error) => {
+            console.error("Error de autenticación:", error);
+            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+        });
 });
 
 document.getElementById("userLogin").addEventListener("click", () => {
@@ -63,10 +52,10 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
     document.getElementById("roleSelection").style.display = "block";
 });
 
-document.getElementById("backToAdminRoleSelection").addEventListener("click", async () => {
+document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    await signOut(auth); // Cerrar sesión al regresar al menú principal
+    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
 });
 
 // Función para obtener el número de ticket consecutivo
