@@ -6,7 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    apiKey: "YOUR_API_KEY",
     authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
     projectId: "mesa-de-ayuda-f5a6a",
     storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
@@ -21,13 +21,36 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-// Manejo de la selección de rol
+// Función para enviar correo de notificación
+async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, consecutivo) {
+    const correoContenido = `
+        Hola ${usuario},
+
+        Tu ticket ha sido creado exitosamente. El número de tu ticket es: ${consecutivo}.
+
+        Descripción del problema: ${descripcion}
+        Teléfono o Extensión: ${telefono}
+        ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
+        Contraseña TW: ${password}
+
+        Gracias por contactarnos.
+
+        Saludos,
+        Departamento TI
+    `;
+
+    // Aquí se enviaría el correo. En este caso, lo estamos simulando con console.log
+    console.log("Correo enviado a:", email);
+    console.log(correoContenido);
+}
+
+// Manejo de la selección de rol y botón de regreso con estilo inicial
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
     const password = prompt("Ingrese su contraseña:");
 
     signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(() => {
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
             mostrarTickets(true);
@@ -45,7 +68,6 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);
 });
 
-// Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
@@ -94,7 +116,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             imagenURL = await getDownloadURL(storageRef);
         }
 
-        await addDoc(collection(db, "tickets"), {
+        const ticketData = {
             usuario,
             company,
             email,
@@ -108,9 +130,12 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             consecutivo,
             imagenURL,
             comentarios: ""
-        });
+        };
 
-        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono);
+        await addDoc(collection(db, "tickets"), ticketData);
+
+        // Enviar notificación por correo
+        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, consecutivo);
 
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
@@ -118,15 +143,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
-
-// Función para enviar notificación por correo con nuevos campos
-async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono) {
-    console.log(`Enviando correo a: ${email}`);
-    console.log(`Nombre: ${usuario}`);
-    console.log(`Descripción: ${descripcion}`);
-    console.log(`TeamViewer ID: ${teamviewerId}, Contraseña: ${password}`);
-    console.log(`Teléfono/Extensión: ${telefono}`);
-}
 
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
