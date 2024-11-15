@@ -21,17 +21,6 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 
-// Función para mostrar la pantalla de selección de rol con estilo original
-function mostrarPantallaSeleccionRol() {
-    document.getElementById("roleSelection").style.display = "flex";
-    document.getElementById("adminLogin").classList.remove("disabled");
-    document.getElementById("userLogin").classList.remove("disabled");
-    document.getElementById("adminLogin").classList.add("btn-primary");
-    document.getElementById("userLogin").classList.add("btn-secondary");
-    document.getElementById("adminInterface").style.display = "none";
-    document.getElementById("userInterface").style.display = "none";
-}
-
 // Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
@@ -59,11 +48,13 @@ document.getElementById("userLogin").addEventListener("click", () => {
 
 // Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
-    mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
+    document.getElementById("userInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
 });
 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
-    mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
     auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
 });
 
@@ -114,7 +105,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
-            imagenURL
+            imagenURL,
+            comentarios: ""  // Campo para almacenar comentarios
         });
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
@@ -159,6 +151,7 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                <td>${ticket.comentarios || "Sin comentarios"}</td>
                 ${
                     isAdmin 
                     ? `<td>
@@ -167,9 +160,10 @@ function mostrarTickets(isAdmin) {
                               <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
                               <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
                           </select>
-                          <button class="btn btn-sm btn-primary mt-2" onclick="ejecutarCambioEstado('${doc.id}')">Ejecutar</button>
+                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
                        </td>` 
-                    : "<td></td>"
+                    : ""
                 }
             `;
 
@@ -178,31 +172,24 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para ejecutar el cambio de estado en Firebase y enviar notificación
-async function ejecutarCambioEstado(ticketId) {
+// Función para actualizar el estado y los comentarios en Firebase
+async function actualizarTicket(ticketId) {
     const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
+    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado en Firestore
+        // Actualizar el estado y comentarios en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
+            comentarios: nuevoComentario,
             fechaCierre: fechaCierre,
         });
 
-        alert(`Estado del ticket actualizado a: ${nuevoEstado}`);
-        
-        // Llamada a la función de notificación por correo
-        enviarNotificacionCorreo(ticketId, nuevoEstado);
-
+        alert(`Ticket actualizado con éxito.`);
     } catch (error) {
-        console.error("Error al cambiar el estado del ticket: ", error);
+        console.error("Error al actualizar el ticket: ", error);
     }
-}
-
-// Función para enviar notificación por correo
-async function enviarNotificacionCorreo(ticketId, nuevoEstado) {
-    console.log(`Enviando correo de notificación para ticket ${ticketId} con estado ${nuevoEstado}`);
 }
 
 // Función para cargar estadísticas (solo para el administrador)
@@ -239,5 +226,5 @@ document.getElementById("userFilterApply")?.addEventListener("click", () => most
 document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 
 // Exportar funciones globales para acceso desde el HTML
-window.ejecutarCambioEstado = ejecutarCambioEstado;
+window.actualizarTicket = actualizarTicket;
 
