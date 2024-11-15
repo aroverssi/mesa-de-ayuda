@@ -112,6 +112,9 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         });
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
+
+        // Enviar notificación de correo
+        enviarNotificacionCorreo(consecutivo, descripcion, teamviewerId, password, telefono);
     } catch (error) {
         console.error("Error al enviar el ticket: ", error);
     }
@@ -192,6 +195,15 @@ async function actualizarTicket(ticketId) {
     } catch (error) {
         console.error("Error al actualizar el ticket: ", error);
     }
+}
+
+// Función para enviar notificación por correo
+async function enviarNotificacionCorreo(ticketId, descripcion, teamviewerId, password, telefono) {
+    console.log(`Enviando correo de notificación para ticket ${ticketId}`);
+    console.log(`Descripción: ${descripcion}`);
+    console.log(`TeamViewer ID: ${teamviewerId}`);
+    console.log(`Contraseña TeamViewer: ${password}`);
+    console.log(`Teléfono/Extensión: ${telefono}`);
 }
 
 // Función para cargar estadísticas y visualizar en gráfico
