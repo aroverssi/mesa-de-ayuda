@@ -28,11 +28,10 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);  // Cargar tickets con permisos de admin
-            cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+            mostrarTickets(true);
+            cargarEstadisticas();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -43,7 +42,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+    mostrarTickets(false);
 });
 
 // Botón para regresar a la selección de roles
@@ -55,7 +54,7 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
+    auth.signOut();
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -106,7 +105,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaCierre: null,
             consecutivo,
             imagenURL,
-            comentarios: ""  // Campo para almacenar comentarios
+            comentarios: ""
         });
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
@@ -148,6 +147,8 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.usuario}</td>
                 <td>${ticket.company}</td>
                 <td>${ticket.descripcion}</td>
+                <td>${ticket.teamviewerId}</td>
+                <td>${ticket.password}</td>
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
@@ -179,7 +180,6 @@ async function actualizarTicket(ticketId) {
     const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
     try {
-        // Actualizar el estado y comentarios en Firestore
         await updateDoc(doc(db, "tickets", ticketId), {
             estado: nuevoEstado,
             comentarios: nuevoComentario,
