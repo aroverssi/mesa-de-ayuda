@@ -23,9 +23,13 @@ const auth = getAuth(app);
 
 // Función para mostrar la pantalla de selección de rol con estilo original
 function mostrarPantallaSeleccionRol() {
-    document.getElementById("roleSelection").style.display = "block";
+    document.getElementById("roleSelection").style.display = "flex";
+    document.getElementById("adminLogin").classList.remove("disabled");
+    document.getElementById("userLogin").classList.remove("disabled");
     document.getElementById("adminLogin").classList.add("btn-primary");
     document.getElementById("userLogin").classList.add("btn-secondary");
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("userInterface").style.display = "none";
 }
 
 // Manejo de la selección de rol
@@ -55,12 +59,10 @@ document.getElementById("userLogin").addEventListener("click", () => {
 
 // Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
-    document.getElementById("userInterface").style.display = "none";
     mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
 });
 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
-    document.getElementById("adminInterface").style.display = "none";
     mostrarPantallaSeleccionRol();  // Mostrar selección de rol con el estilo original
     auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
 });
@@ -238,3 +240,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.ejecutarCambioEstado = ejecutarCambioEstado;
+
