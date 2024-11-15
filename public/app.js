@@ -1,8 +1,8 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, updateDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -25,7 +25,6 @@ const auth = getAuth(app);
 async function verificarRolAdmin(uid) {
     const docRef = doc(db, "roles", uid);
     const docSnap = await getDoc(docRef);
-
     return docSnap.exists() && docSnap.data().role === "admin";
 }
 
@@ -43,7 +42,7 @@ async function iniciarSesion(email, password) {
             cargarEstadisticas();
         } else {
             alert("No tienes permiso para acceder a esta sección.");
-            auth.signOut();  // Cerrar sesión si no es admin
+            await auth.signOut();  // Cerrar sesión si no es admin
         }
     } catch (error) {
         alert("Error de inicio de sesión: " + error.message);
@@ -77,7 +76,7 @@ document.getElementById("backToAdminRoleSelection").addEventListener("click", ()
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-    
+
     // Obtener valores de filtro
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
