@@ -28,11 +28,10 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Acceso concedido al administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);  // Cargar tickets con permisos de admin
-            cargarEstadisticas();  // Cargar estadísticas en el panel de administrador
+            mostrarTickets(true);
+            cargarEstadisticas();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -43,7 +42,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
 document.getElementById("userLogin").addEventListener("click", () => {
     document.getElementById("roleSelection").style.display = "none";
     document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);  // Cargar tickets sin permisos de admin
+    mostrarTickets(false);
 });
 
 // Botón para regresar a la selección de roles
@@ -55,7 +54,7 @@ document.getElementById("backToUserRoleSelection").addEventListener("click", () 
 document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
     document.getElementById("adminInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();  // Cerrar sesión del administrador al regresar a la selección de roles
+    auth.signOut();
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -108,12 +107,11 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaCierre: null,
             consecutivo,
             imagenURL,
-            comentarios: ""  // Campo para almacenar comentarios
+            comentarios: ""
         };
 
         await addDoc(collection(db, "tickets"), ticketData);
 
-        // Enviar notificación por correo con todos los datos del formulario
         enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo);
 
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
@@ -176,26 +174,23 @@ function mostrarTickets(isAdmin) {
                 <td>${ticket.consecutivo}</td>
                 <td>${ticket.usuario}</td>
                 <td>${ticket.company}</td>
-                <td>${ticket.email}</td>
-                <td>${ticket.telefono}</td>
+                ${isAdmin ? `<td>${ticket.email}</td><td>${ticket.telefono}</td>` : ""}
                 <td>${ticket.descripcion}</td>
-                <td>${ticket.teamviewerId}</td>
-                <td>${ticket.password}</td>
+                ${isAdmin ? `<td>${ticket.teamviewerId}</td><td>${ticket.password}</td>` : ""}
                 <td>${ticket.estado}</td>
                 <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
                 <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                 <td>${ticket.comentarios || "Sin comentarios"}</td>
-                ${
-                    isAdmin 
+                ${isAdmin 
                     ? `<td>
-                          <select id="estadoSelect_${doc.id}">
-                              <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                              <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                              <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                          </select>
-                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                       </td>` 
+                        <select id="estadoSelect_${doc.id}">
+                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                        </select>
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>` 
                     : ""
                 }
             `;
