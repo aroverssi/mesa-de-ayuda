@@ -82,6 +82,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
+    const telefono = document.getElementById("telefono").value || "";
     const imagenFile = document.getElementById("imagen").files[0];
 
     const consecutivo = await obtenerConsecutivo();
@@ -94,26 +95,58 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             imagenURL = await getDownloadURL(storageRef);
         }
 
-        await addDoc(collection(db, "tickets"), {
+        const ticketData = {
             usuario,
             company,
             email,
             descripcion,
             teamviewerId,
             password,
+            telefono,
             estado: "pendiente",
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
             imagenURL,
             comentarios: ""  // Campo para almacenar comentarios
-        });
+        };
+
+        await addDoc(collection(db, "tickets"), ticketData);
+
+        // Enviar notificación por correo con todos los datos del formulario
+        enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo);
+
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket: ", error);
     }
 });
+
+// Función para enviar correo de notificación con todos los datos del formulario
+async function enviarNotificacionCorreo(email, usuario, descripcion, teamviewerId, password, telefono, company, consecutivo) {
+    const correoContenido = `
+        Hola ${usuario},
+
+        Tu ticket ha sido creado exitosamente. El número de tu ticket es: ${consecutivo}.
+
+        Información del Ticket:
+        - Compañía: ${company}
+        - Descripción del problema: ${descripcion}
+        - Teléfono o Extensión: ${telefono}
+        - ID TeamViewer (en caso de necesitar asistencia remota): ${teamviewerId}
+        - Contraseña TW: ${password}
+
+        Gracias por contactarnos.
+
+        Saludos,
+        Departamento TI
+    `;
+
+    // Aquí se simula el envío de correo, reemplazar con la lógica de envío real si está disponible
+    console.log("Correo enviado a:", email);
+    console.log(correoContenido);
+}
 
 // Función para mostrar los tickets con filtros y orden cronológico
 function mostrarTickets(isAdmin) {
@@ -227,3 +260,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
