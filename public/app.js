@@ -142,31 +142,37 @@ function mostrarTickets(isAdmin) {
             const ticket = doc.data();
             const row = document.createElement("tr");
 
-            row.innerHTML = `
-                <td>${ticket.consecutivo}</td>
-                <td>${ticket.usuario}</td>
-                <td>${ticket.company}</td>
-                <td>${ticket.descripcion}</td>
-                <td>${ticket.teamviewerId}</td>
-                <td>${ticket.password}</td>
-                <td>${ticket.estado}</td>
-                <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
-                <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                <td>${ticket.comentarios || "Sin comentarios"}</td>
-                ${
-                    isAdmin 
-                    ? `<td>
-                          <select id="estadoSelect_${doc.id}">
-                              <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                              <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                              <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                          </select>
-                          <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                          <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                       </td>` 
-                    : ""
-                }
-            `;
+            // Diferenciar las columnas que se muestran para usuarios y administradores
+            row.innerHTML = isAdmin
+                ? `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.teamviewerId}</td>
+                    <td>${ticket.password}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${ticket.fechaApertura ? new Date(ticket.fechaApertura.seconds * 1000).toLocaleString() : ""}</td>
+                    <td>${ticket.estado === "cerrado" ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    <td>
+                        <select id="estadoSelect_${doc.id}">
+                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                        </select>
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>
+                `
+                : `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                `;
 
             ticketTable.appendChild(row);
         });
@@ -195,7 +201,9 @@ async function actualizarTicket(ticketId) {
 // Función para cargar estadísticas (solo para el administrador)
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
-    let totalTickets = 0, totalCerrados = 0, sumaResolucion = 0;
+    let totalTickets = 0,
+        totalCerrados = 0,
+        sumaResolucion = 0;
 
     onSnapshot(collection(db, "tickets"), (snapshot) => {
         totalTickets = snapshot.size;
@@ -206,12 +214,15 @@ function cargarEstadisticas() {
             const ticket = doc.data();
             if (ticket.estado === "cerrado") {
                 totalCerrados++;
-                const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                const tiempoResolucion =
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
                 sumaResolucion += tiempoResolucion;
             }
         });
 
-        const promedioResolucion = totalCerrados ? (sumaResolucion / totalCerrados).toFixed(2) : "N/A";
+        const promedioResolucion = totalCerrados
+            ? (sumaResolucion / totalCerrados).toFixed(2)
+            : "N/A";
         statsList.innerHTML = `
             <li>Total de Tickets: ${totalTickets}</li>
             <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
