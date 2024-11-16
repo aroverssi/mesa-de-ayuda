@@ -23,48 +23,29 @@
         <div id="userInterface" style="display: none;">
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
-            <!-- Formulario de Envío de Ticket -->
+            <!-- Filtro de Tickets para Usuario -->
             <div class="card p-4 shadow-sm mb-5">
-                <h3>Enviar un Ticket</h3>
-                <form id="ticketForm" autocomplete="off">
-                    <div class="form-group">
-                        <label for="usuario">Nombre</label>
-                        <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
+                <h3>Filtrar Tickets</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="userFilterUser" class="form-control" placeholder="Filtrar por Usuario">
                     </div>
-                    <div class="form-group">
-                        <label for="company">Compañía</label>
-                        <select id="company" class="form-control" required>
-                            <option value="">Seleccione una compañía</option>
+                    <div class="col-md-3">
+                        <select id="userFilterCompany" class="form-control">
+                            <option value="">Filtrar por Compañía</option>
                             <option value="Colinas Alta Vista">Colinas Alta Vista</option>
                             <option value="Allpack">Allpack</option>
                             <option value="Business On Line">Business On Line</option>
-                            <option value="Zona Franca">Zona Franca</option>
-                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="email">Correo Electrónico</label>
-                        <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
+                    <div class="col-md-3">
+                        <input type="date" id="userFilterStartDate" class="form-control">
                     </div>
-                    <div class="form-group">
-                        <label for="descripcion">Descripción del problema</label>
-                        <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
+                    <div class="col-md-3">
+                        <input type="date" id="userFilterEndDate" class="form-control">
                     </div>
-                    <div class="form-group">
-                        <label for="teamviewer_id">ID TeamViewer <small>(En caso de necesitar asistencia remota)</small></label>
-                        <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña TW</label>
-                        <input type="text" id="password" class="form-control" placeholder="Contraseña TeamViewer">
-                    </div>
-                    <div class="form-group">
-                        <label for="imagen">Adjuntar Imagen</label>
-                        <input type="file" id="imagen" class="form-control-file">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enviar Ticket</button>
-                </form>
+                </div>
+                <button id="userFilterApply" class="btn btn-primary mt-3">Aplicar Filtros</button>
             </div>
 
             <!-- Tablero de Tickets para Usuario -->
@@ -77,7 +58,6 @@
                         <th>Compañía</th>
                         <th>Descripción</th>
                         <th>Estado</th>
-                        <th>Comentarios</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -88,6 +68,31 @@
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
+            <!-- Filtro de Tickets para Administrador -->
+            <div class="card p-4 shadow-sm mb-5">
+                <h3>Filtrar Tickets</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" id="adminFilterUser" class="form-control" placeholder="Filtrar por Usuario">
+                    </div>
+                    <div class="col-md-3">
+                        <select id="adminFilterCompany" class="form-control">
+                            <option value="">Filtrar por Compañía</option>
+                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                            <option value="Allpack">Allpack</option>
+                            <option value="Business On Line">Business On Line</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" id="adminFilterStartDate" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" id="adminFilterEndDate" class="form-control">
+                    </div>
+                </div>
+                <button id="adminFilterApply" class="btn btn-primary mt-3">Aplicar Filtros</button>
+            </div>
+
             <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
@@ -97,21 +102,12 @@
                         <th>Usuario</th>
                         <th>Compañía</th>
                         <th>Descripción</th>
-                        <th>ID TeamViewer</th>
-                        <th>Contraseña TW</th>
                         <th>Estado</th>
                         <th>Fecha de Inicio</th>
-                        <th>Fecha de Resolución</th>
-                        <th>Comentarios</th>
-                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
-            <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3">
-                <!-- Estadísticas del administrador se cargarán aquí -->
-            </ul>
         </div>
     </div>
 </body>
