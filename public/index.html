@@ -67,6 +67,38 @@
                 </form>
             </div>
 
+            <!-- Filtros para Usuario -->
+            <div class="card p-3 shadow-sm mb-4">
+                <h4>Filtrar Tickets</h4>
+                <div class="form-row">
+                    <div class="col">
+                        <input type="text" id="userFilterUser" class="form-control mb-2" placeholder="Filtrar por Usuario">
+                    </div>
+                    <div class="col">
+                        <select id="userFilterCompany" class="form-control mb-2">
+                            <option value="">Filtrar por Compañía</option>
+                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                            <option value="Allpack">Allpack</option>
+                            <option value="Business On Line">Business On Line</option>
+                            <option value="Zona Franca">Zona Franca</option>
+                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <label for="userFilterStartDate">Fecha Inicio</label>
+                        <input type="date" id="userFilterStartDate" class="form-control">
+                    </div>
+                    <div class="col">
+                        <label for="userFilterEndDate">Fecha Fin</label>
+                        <input type="date" id="userFilterEndDate" class="form-control">
+                    </div>
+                </div>
+                <button id="userFilterApply" class="btn btn-info mt-3">Aplicar Filtros</button>
+            </div>
+
             <!-- Tablero de Tickets para Usuario -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
@@ -88,6 +120,38 @@
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
+            <!-- Filtros para Administrador -->
+            <div class="card p-3 shadow-sm mb-4">
+                <h4>Filtrar Tickets</h4>
+                <div class="form-row">
+                    <div class="col">
+                        <input type="text" id="adminFilterUser" class="form-control mb-2" placeholder="Filtrar por Usuario">
+                    </div>
+                    <div class="col">
+                        <select id="adminFilterCompany" class="form-control mb-2">
+                            <option value="">Filtrar por Compañía</option>
+                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                            <option value="Allpack">Allpack</option>
+                            <option value="Business On Line">Business On Line</option>
+                            <option value="Zona Franca">Zona Franca</option>
+                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <label for="adminFilterStartDate">Fecha Inicio</label>
+                        <input type="date" id="adminFilterStartDate" class="form-control">
+                    </div>
+                    <div class="col">
+                        <label for="adminFilterEndDate">Fecha Fin</label>
+                        <input type="date" id="adminFilterEndDate" class="form-control">
+                    </div>
+                </div>
+                <button id="adminFilterApply" class="btn btn-info mt-3">Aplicar Filtros</button>
+            </div>
+
             <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
@@ -109,9 +173,7 @@
                 <tbody></tbody>
             </table>
             <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3">
-                <!-- Estadísticas del administrador se cargarán aquí -->
-            </ul>
+            <ul id="adminStats" class="list-group mt-3"></ul>
         </div>
     </div>
 </body>
