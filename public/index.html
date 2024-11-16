@@ -13,9 +13,9 @@
         <h1 class="text-center mb-4">Mesa de Ayuda</h1>
 
         <!-- Interfaz de Selección de Rol -->
-        <div id="roleSelection" class="card p-4 shadow-sm mb-5">
+        <div id="roleSelection" class="card p-4 shadow-sm mb-5" style="display: flex; flex-direction: column; align-items: center;">
             <h3>Selecciona tu rol</h3>
-            <button id="adminLogin" class="btn btn-primary">Administrador</button>
+            <button id="adminLogin" class="btn btn-primary mb-2">Administrador</button>
             <button id="userLogin" class="btn btn-secondary">Usuario</button>
         </div>
 
@@ -67,6 +67,28 @@
                 </form>
             </div>
 
+            <!-- Filtros para Usuario -->
+            <div class="filters mb-4">
+                <h4>Filtrar Tickets</h4>
+                <select id="userFilterCompany" class="form-control mb-2">
+                    <option value="">Filtrar por Compañía</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
+                <input type="date" id="userFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
+                <select id="userFilterStatus" class="form-control">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="en proceso">En Proceso</option>
+                </select>
+                <button id="userFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
+            </div>
+
             <!-- Tablero de Tickets para Usuario -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
@@ -74,6 +96,7 @@
                     <tr>
                         <th>Número de Ticket</th>
                         <th>Usuario</th>
+                        <th>Correo</th>
                         <th>Compañía</th>
                         <th>Descripción</th>
                         <th>Estado</th>
@@ -88,6 +111,28 @@
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
+            <!-- Filtros para Administrador -->
+            <div class="filters mb-4">
+                <h4>Filtrar Tickets</h4>
+                <select id="adminFilterCompany" class="form-control mb-2">
+                    <option value="">Filtrar por Compañía</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
+                <input type="date" id="adminFilterDate" class="form-control mb-2" placeholder="Filtrar por Fecha">
+                <select id="adminFilterStatus" class="form-control">
+                    <option value="">Filtrar por Estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="cerrado">Cerrado</option>
+                    <option value="en proceso">En Proceso</option>
+                </select>
+                <button id="adminFilterApply" class="btn btn-info mt-2">Aplicar Filtros</button>
+            </div>
+
             <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
@@ -95,6 +140,7 @@
                     <tr>
                         <th>Número de Ticket</th>
                         <th>Usuario</th>
+                        <th>Correo</th>
                         <th>Compañía</th>
                         <th>Descripción</th>
                         <th>ID TeamViewer</th>
@@ -116,3 +162,4 @@
     </div>
 </body>
 </html>
+
