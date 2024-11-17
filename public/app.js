@@ -4,8 +4,9 @@ import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, se
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 // Importar Chart.js desde un CDN confiable
-import Chart from "https://cdn.jsdelivr.net/npm/chart.js";
-
+import { Chart } from "https://cdn.jsdelivr.net/npm/chart.js";
+// Importar jsPDF para la funcionalidad de exportar a PDF
+import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -238,7 +239,6 @@ function cargarEstadisticas() {
 function cargarDashboardMensual() {
     const ctx = document.getElementById("monthlyChart").getContext("2d");
 
-    // Consulta para obtener tickets del mes actual
     const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const finMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
 
@@ -258,7 +258,6 @@ function cargarDashboardMensual() {
             }
         });
 
-        // Actualizar el gráfico
         if (window.dashboardChart) {
             window.dashboardChart.data.datasets[0].data = Object.values(data);
             window.dashboardChart.update();
@@ -303,3 +302,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
