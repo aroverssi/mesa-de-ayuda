@@ -22,7 +22,7 @@
         <!-- Interfaz de Usuario -->
         <div id="userInterface" style="display: none;">
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-            
+
             <!-- Formulario de Envío de Ticket -->
             <div class="card p-4 shadow-sm mb-5">
                 <h3>Enviar un Ticket</h3>
@@ -67,7 +67,8 @@
                 </form>
             </div>
 
-            <!-- Filtros para Usuario -->
+            <!-- Tablero de Tickets para Usuario -->
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <div class="form-inline mb-3">
                 <select id="userFilterStatus" class="form-control mr-2">
                     <option value="">Todos los Estados</option>
@@ -87,9 +88,6 @@
                 <input type="date" id="userFilterDate" class="form-control mr-2">
                 <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
-
-            <!-- Tablero de Tickets para Usuario -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
                 <thead>
                     <tr>
@@ -101,19 +99,14 @@
                         <th>Comentarios</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="6" class="text-center" id="loadingUserTickets">Cargando tickets...</td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
 
         <!-- Interfaz de Administrador -->
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-
-            <!-- Filtros para Administrador -->
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <div class="form-inline mb-3">
                 <select id="adminFilterStatus" class="form-control mr-2">
                     <option value="">Todos los Estados</option>
@@ -133,9 +126,6 @@
                 <input type="date" id="adminFilterDate" class="form-control mr-2">
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
-
-            <!-- Tablero de Tickets para Administrador -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
                 <thead>
                     <tr>
@@ -152,16 +142,10 @@
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="11" class="text-center" id="loadingAdminTickets">Cargando tickets...</td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
             </table>
             <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3">
-                <!-- Estadísticas del administrador se cargarán aquí -->
-            </ul>
+            <ul id="adminStats" class="list-group mt-3"></ul>
         </div>
     </div>
 </body>
