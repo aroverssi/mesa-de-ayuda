@@ -3,10 +3,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-// Importar Chart.js desde un CDN confiable
-import { Chart } from "https://cdn.jsdelivr.net/npm/chart.js";
-// Importar jsPDF para la funcionalidad de exportar a PDF
-import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -36,7 +32,6 @@ document.getElementById("adminLogin").addEventListener("click", () => {
             document.getElementById("adminInterface").style.display = "block";
             mostrarTickets(true);
             cargarEstadisticas();
-            cargarDashboardMensual(); // Cargar el dashboard mensual
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -235,71 +230,9 @@ function cargarEstadisticas() {
     });
 }
 
-// Nueva Funcionalidad: Dashboard Mensual
-function cargarDashboardMensual() {
-    const ctx = document.getElementById("monthlyChart").getContext("2d");
-
-    const inicioMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const finMes = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-
-    const consulta = query(
-        collection(db, "tickets"),
-        where("fechaApertura", ">=", inicioMes),
-        where("fechaApertura", "<=", finMes)
-    );
-
-    onSnapshot(consulta, (snapshot) => {
-        const data = { pendiente: 0, enProceso: 0, cerrado: 0 };
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            if (ticket.estado in data) {
-                data[ticket.estado]++;
-            }
-        });
-
-        if (window.dashboardChart) {
-            window.dashboardChart.data.datasets[0].data = Object.values(data);
-            window.dashboardChart.update();
-        } else {
-            window.dashboardChart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["Pendiente", "En Proceso", "Cerrado"],
-                    datasets: [
-                        {
-                            label: "Tickets Mensuales",
-                            data: Object.values(data),
-                            backgroundColor: ["#007bff", "#ffc107", "#28a745"]
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    }
-                }
-            });
-        }
-    });
-}
-
-// Descargar Dashboard en PDF
-document.getElementById("downloadPdf").addEventListener("click", () => {
-    const canvas = document.getElementById("monthlyChart");
-    const pdf = new jsPDF();
-
-    pdf.text("Dashboard Mensual", 10, 10);
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 20, 180, 100);
-    pdf.save("dashboard_mensual.pdf");
-});
-
 // Event listeners para aplicar filtros
 document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
 document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
-
