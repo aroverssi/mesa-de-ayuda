@@ -7,6 +7,13 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="app.js"></script>
+    <style>
+        #kpiContainer {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+        }
+    </style>
 </head>
 <body>
     <div class="container my-5">
@@ -127,16 +134,15 @@
                 <input type="date" id="adminFilterEndDate" class="form-control mr-2">
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
-<h3 class="mt-5">KPI Mensual</h3>
-<div id="kpiContainer" class="card p-4 shadow-sm mb-5">
-    <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-    <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-    <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-    <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-    <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
-</div>
 
-            
+            <h3 class="mt-5">KPI Mensual</h3>
+            <div id="kpiContainer">
+                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+                <button id="downloadKpiPdf" class="btn btn-primary mt-3" aria-label="Descargar KPI mensual en PDF">Descargar KPI en PDF</button>
+            </div>
 
             <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
