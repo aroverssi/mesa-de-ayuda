@@ -190,5 +190,3 @@ async function actualizarTicket(ticketId) {
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
-
-
