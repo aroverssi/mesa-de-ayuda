@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -123,7 +124,7 @@ function mostrarTickets(isAdmin) {
 
     consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
 
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 6}" class="text-center">Cargando tickets...</td></tr>`;
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando tickets...</td></tr>`;
 
     onSnapshot(consulta, (snapshot) => {
         ticketTable.innerHTML = "";
@@ -135,6 +136,7 @@ function mostrarTickets(isAdmin) {
                 ? `
                     <td>${ticket.consecutivo}</td>
                     <td>${ticket.usuario}</td>
+                    <td>${ticket.email}</td>
                     <td>${ticket.company}</td>
                     <td>${ticket.descripcion}</td>
                     <td>${ticket.teamviewerId}</td>
@@ -156,6 +158,7 @@ function mostrarTickets(isAdmin) {
                 : `
                     <td>${ticket.consecutivo}</td>
                     <td>${ticket.usuario}</td>
+                    <td>${ticket.email}</td>
                     <td>${ticket.company}</td>
                     <td>${ticket.descripcion}</td>
                     <td>${ticket.estado}</td>
@@ -272,7 +275,6 @@ function calcularKpiMensual() {
 
 // Función para descargar el KPI en PDF
 document.getElementById("downloadKpiPdf").addEventListener("click", () => {
-    const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const totalTickets = document.getElementById("kpiTotal").textContent;
     const ticketsCerrados = document.getElementById("kpiCerrados").textContent;
@@ -297,3 +299,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
