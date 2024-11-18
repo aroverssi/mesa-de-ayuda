@@ -218,6 +218,69 @@ function cargarEstadisticas() {
         `;
     });
 }
+import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
+
+// Función para calcular y mostrar el KPI mensual
+function calcularKpiMensual() {
+    const kpiTotal = document.getElementById("kpiTotal");
+    const kpiCerrados = document.getElementById("kpiCerrados");
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
+
+    let totalTickets = 0;
+    let ticketsCerrados = 0;
+    let sumaResolucion = 0;
+
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    onSnapshot(query(collection(db, "tickets"), where("fechaApertura", ">=", inicioMes)), (snapshot) => {
+        totalTickets = snapshot.size;
+        ticketsCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+                ticketsCerrados++;
+                const tiempoResolucion = 
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = ticketsCerrados ? (sumaResolucion / ticketsCerrados).toFixed(2) : "N/A";
+        const porcentajeCerrados = totalTickets
+            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+            : "0";
+
+        kpiTotal.textContent = totalTickets;
+        kpiCerrados.textContent = ticketsCerrados;
+        kpiPromedioResolucion.textContent = promedioResolucion;
+        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+    });
+}
+
+// Función para descargar el KPI en PDF
+document.getElementById("downloadKpiPdf").addEventListener("click", () => {
+    const doc = new jsPDF();
+    const totalTickets = document.getElementById("kpiTotal").textContent;
+    const ticketsCerrados = document.getElementById("kpiCerrados").textContent;
+    const promedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
+    const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
+
+    doc.text("KPI Mensual de Tickets", 10, 10);
+    doc.text(`Total de Tickets: ${totalTickets}`, 10, 20);
+    doc.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
+    doc.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
+    doc.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
+
+    doc.save("kpi_mensual.pdf");
+});
+
+// Llamar al cálculo del KPI cuando se cargue la interfaz del administrador
+document.getElementById("adminLogin").addEventListener("click", calcularKpiMensual);
 
 // Event listeners para aplicar filtros
 document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
