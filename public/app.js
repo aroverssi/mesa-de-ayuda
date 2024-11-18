@@ -1,179 +1,299 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Ayuda</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <!-- Agregar la librería jsPDF como script global -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script type="module" src="app.js"></script>
-    <style>
-        #kpiContainer {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 15px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container my-5">
-        <h1 class="text-center mb-4">Mesa de Ayuda</h1>
+// Importar las funciones necesarias desde el SDK de Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-        <!-- Interfaz de Selección de Rol -->
-        <div id="roleSelection" class="card p-4 shadow-sm mb-5">
-            <h3>Selecciona tu rol</h3>
-            <button id="adminLogin" class="btn btn-primary">Administrador</button>
-            <button id="userLogin" class="btn btn-secondary">Usuario</button>
-        </div>
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
+    projectId: "mesa-de-ayuda-f5a6a",
+    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
+    messagingSenderId: "912872235241",
+    appId: "1:912872235241:web:2fcf8f473413562c931078",
+    measurementId: "G-0KBEFHH7P9"
+};
 
-        <!-- Interfaz de Usuario -->
-        <div id="userInterface" style="display: none;">
-            <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-            
-            <!-- Formulario de Envío de Ticket -->
-            <div class="card p-4 shadow-sm mb-5">
-                <h3>Enviar un Ticket</h3>
-                <form id="ticketForm" autocomplete="off">
-                    <div class="form-group">
-                        <label for="usuario">Nombre</label>
-                        <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="company">Compañía</label>
-                        <select id="company" class="form-control" required>
-                            <option value="">Seleccione una compañía</option>
-                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                            <option value="Allpack">Allpack</option>
-                            <option value="Business On Line">Business On Line</option>
-                            <option value="Zona Franca">Zona Franca</option>
-                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+// Inicializar Firebase, Firestore y Auth
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Manejo de la selección de rol
+document.getElementById("adminLogin").addEventListener("click", () => {
+    const email = prompt("Ingrese su correo de administrador:");
+    const password = prompt("Ingrese su contraseña:");
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
+            mostrarTickets(true);
+            cargarEstadisticas();
+            calcularKpiMensual();
+        })
+        .catch((error) => {
+            console.error("Error de autenticación:", error);
+            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+        });
+});
+
+document.getElementById("userLogin").addEventListener("click", () => {
+    document.getElementById("roleSelection").style.display = "none";
+    document.getElementById("userInterface").style.display = "block";
+    mostrarTickets(false);
+});
+
+// Botón para regresar a la selección de roles
+document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
+    document.getElementById("userInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+});
+
+document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
+    document.getElementById("adminInterface").style.display = "none";
+    document.getElementById("roleSelection").style.display = "block";
+    auth.signOut();
+});
+
+// Función para obtener el número de ticket consecutivo
+async function obtenerConsecutivo() {
+    const docRef = doc(db, "config", "consecutivoTicket");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const currentConsecutivo = docSnap.data().consecutivo;
+        await updateDoc(docRef, { consecutivo: increment(1) });
+        return currentConsecutivo + 1;
+    } else {
+        await setDoc(docRef, { consecutivo: 1 });
+        return 1;
+    }
+}
+
+// Función de envío de ticket
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usuario = document.getElementById("usuario").value;
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const teamviewerId = document.getElementById("teamviewer_id").value || "";
+    const password = document.getElementById("password").value || "";
+
+    const consecutivo = await obtenerConsecutivo();
+
+    try {
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId,
+            password,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+            fechaCierre: null,
+            consecutivo,
+            comentarios: ""
+        });
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
+});
+
+// Función para mostrar tickets con filtros
+function mostrarTickets(isAdmin) {
+    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
+    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
+    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
+
+    let consulta = collection(db, "tickets");
+    const filtros = [];
+
+    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
+    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
+    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
+    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
+
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
+
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 6}" class="text-center">Cargando tickets...</td></tr>`;
+
+    onSnapshot(consulta, (snapshot) => {
+        ticketTable.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+
+            row.innerHTML = isAdmin
+                ? `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.teamviewerId}</td>
+                    <td>${ticket.password}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    <td>
+                        <select id="estadoSelect_${doc.id}">
+                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Correo Electrónico</label>
-                        <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="descripcion">Descripción del problema</label>
-                        <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="teamviewer_id">ID TeamViewer <small>(En caso de necesitar asistencia remota)</small></label>
-                        <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña TW</label>
-                        <input type="text" id="password" class="form-control" placeholder="Contraseña TeamViewer">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enviar Ticket</button>
-                </form>
-            </div>
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>
+                `
+                : `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                `;
 
-            <!-- Filtros para Usuario -->
-            <div class="form-inline mb-3">
-                <select id="userFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="userFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="userFilterStartDate" class="form-control mr-2">
-                <input type="date" id="userFilterEndDate" class="form-control mr-2">
-                <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+            ticketTable.appendChild(row);
+        });
+    });
+}
 
-            <!-- Tablero de Tickets para Usuario -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableUser">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Correo Electrónico</th>
-                        <th>Compañía</th>
-                        <th>Descripción</th>
-                        <th>Estado</th>
-                        <th>Comentarios</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+// Función para actualizar ticket
+async function actualizarTicket(ticketId) {
+    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
+    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
+    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
 
-        <!-- Interfaz de Administrador -->
-        <div id="adminInterface" style="display: none;">
-            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-            
-            <!-- Filtros para Administrador -->
-            <div class="form-inline mb-3">
-                <select id="adminFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="adminFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
-                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
-                <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+    try {
+        await updateDoc(doc(db, "tickets", ticketId), {
+            estado: nuevoEstado,
+            comentarios: nuevoComentario,
+            fechaCierre: fechaCierre,
+        });
 
-            <h3 class="mt-5">KPI Mensual</h3>
-            <div id="kpiContainer">
-                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-                <button id="downloadKpiPdf" class="btn btn-primary mt-3" aria-label="Descargar KPI mensual en PDF">Descargar KPI en PDF</button>
-            </div>
+        alert(`Ticket actualizado con éxito.`);
+    } catch (error) {
+        console.error("Error al actualizar el ticket: ", error);
+    }
+}
 
-            <!-- Tablero de Tickets para Administrador -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableAdmin">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Correo Electrónico</th>
-                        <th>Compañía</th>
-                        <th>Descripción</th>
-                        <th>ID TeamViewer</th>
-                        <th>Contraseña TW</th>
-                        <th>Estado</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Resolución</th>
-                        <th>Comentarios</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3">
-                <!-- Estadísticas del administrador se cargarán aquí -->
-            </ul>
-        </div>
-    </div>
-</body>
-</html>
+// Cargar estadísticas del administrador
+function cargarEstadisticas() {
+    const statsList = document.getElementById("adminStats");
+    let totalTickets = 0,
+        totalCerrados = 0,
+        sumaResolucion = 0;
 
+    onSnapshot(collection(db, "tickets"), (snapshot) => {
+        totalTickets = snapshot.size;
+        totalCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado") {
+                totalCerrados++;
+                const tiempoResolucion =
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = totalCerrados
+            ? (sumaResolucion / totalCerrados).toFixed(2)
+            : "N/A";
+        statsList.innerHTML = `
+            <li>Total de Tickets: ${totalTickets}</li>
+            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
+            <li>Tickets Cerrados: ${totalCerrados}</li>
+            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
+        `;
+    });
+}
+
+// Función para calcular y mostrar el KPI mensual
+function calcularKpiMensual() {
+    const kpiTotal = document.getElementById("kpiTotal");
+    const kpiCerrados = document.getElementById("kpiCerrados");
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
+
+    let totalTickets = 0;
+    let ticketsCerrados = 0;
+    let sumaResolucion = 0;
+
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    onSnapshot(query(collection(db, "tickets"), where("fechaApertura", ">=", inicioMes)), (snapshot) => {
+        totalTickets = snapshot.size;
+        ticketsCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+                ticketsCerrados++;
+                const tiempoResolucion = 
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = ticketsCerrados ? (sumaResolucion / ticketsCerrados).toFixed(2) : "N/A";
+        const porcentajeCerrados = totalTickets
+            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+            : "0";
+
+        kpiTotal.textContent = totalTickets;
+        kpiCerrados.textContent = ticketsCerrados;
+        kpiPromedioResolucion.textContent = promedioResolucion;
+        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+        // Manejo de caso sin tickets
+        if (totalTickets === 0) {
+            kpiTotal.textContent = "0";
+            kpiCerrados.textContent = "0";
+            kpiPromedioResolucion.textContent = "N/A";
+            kpiPorcentajeCerrados.textContent = "0%";
+        }
+    });
+}
+
+// Función para descargar el KPI en PDF
+document.getElementById("downloadKpiPdf").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const totalTickets = document.getElementById("kpiTotal").textContent;
+    const ticketsCerrados = document.getElementById("kpiCerrados").textContent;
+    const promedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
+    const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("KPI Mensual de Tickets", 10, 10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Total de Tickets: ${totalTickets}`, 10, 20);
+    doc.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
+    doc.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
+    doc.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
+
+    doc.save("kpi_mensual.pdf");
+    alert("El KPI mensual se ha descargado correctamente.");
+});
+
+// Event listeners para aplicar filtros
+document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
+document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
+
+// Exportar funciones globales para acceso desde el HTML
+window.actualizarTicket = actualizarTicket;
