@@ -19,7 +19,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Manejo de selección de rol
+// Manejo de la selección de rol
 document.getElementById("adminLogin").addEventListener("click", () => {
     const email = prompt("Ingrese su correo de administrador:");
     const password = prompt("Ingrese su contraseña:");
@@ -44,7 +44,7 @@ document.getElementById("userLogin").addEventListener("click", () => {
     mostrarTickets(false);
 });
 
-// Botones para regresar a selección de rol
+// Botón para regresar a la selección de roles
 document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
     document.getElementById("userInterface").style.display = "none";
     document.getElementById("roleSelection").style.display = "block";
@@ -71,7 +71,7 @@ async function obtenerConsecutivo() {
     }
 }
 
-// Función para enviar tickets
+// Función de envío de ticket
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const usuario = document.getElementById("usuario").value;
@@ -97,7 +97,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             consecutivo,
             comentarios: ""
         });
-        alert(`Ticket enviado con éxito. Número de ticket: ${consecutivo}`);
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket: ", error);
@@ -107,6 +107,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 // Función para mostrar tickets con filtros
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
@@ -120,9 +121,9 @@ function mostrarTickets(isAdmin) {
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
 
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 7}" class="text-center">Cargando tickets...</td></tr>`;
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando tickets...</td></tr>`;
 
     onSnapshot(consulta, (snapshot) => {
         ticketTable.innerHTML = "";
@@ -137,7 +138,11 @@ function mostrarTickets(isAdmin) {
                     <td>${ticket.company}</td>
                     <td>${ticket.email}</td>
                     <td>${ticket.descripcion}</td>
+                    <td>${ticket.teamviewerId}</td>
+                    <td>${ticket.password}</td>
                     <td>${ticket.estado}</td>
+                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                     <td>${ticket.comentarios || "Sin comentarios"}</td>
                     <td>
                         <select id="estadoSelect_${doc.id}">
@@ -145,7 +150,7 @@ function mostrarTickets(isAdmin) {
                             <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
                             <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
                         </select>
-                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Comentario">
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
                         <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
                     </td>
                 `
@@ -176,11 +181,14 @@ async function actualizarTicket(ticketId) {
             comentarios: nuevoComentario,
             fechaCierre: fechaCierre,
         });
-        alert("Ticket actualizado con éxito.");
+
+        alert(`Ticket actualizado con éxito.`);
     } catch (error) {
         console.error("Error al actualizar el ticket: ", error);
     }
 }
 
-// Exportar funciones globales
+// Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
+
