@@ -30,6 +30,8 @@
         <!-- Interfaz de Usuario -->
         <div id="userInterface" style="display: none;">
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            
+            <!-- Formulario de Envío de Ticket -->
             <div class="card p-4 shadow-sm mb-5">
                 <h3>Enviar un Ticket</h3>
                 <form id="ticketForm" autocomplete="off">
@@ -61,6 +63,7 @@
                 </form>
             </div>
 
+            <!-- Filtros para Usuario -->
             <div class="form-inline mb-3">
                 <select id="userFilterStatus" class="form-control mr-2">
                     <option value="">Todos los Estados</option>
@@ -68,9 +71,19 @@
                     <option value="en proceso">En Proceso</option>
                     <option value="cerrado">Cerrado</option>
                 </select>
+                <select id="userFilterCompany" class="form-control mr-2">
+                    <option value="">Todas las Compañías</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
                 <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
+            <!-- Tablero de Tickets para Usuario -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
                 <thead>
@@ -91,6 +104,8 @@
         <!-- Interfaz de Administrador -->
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            
+            <!-- Filtros para Administrador -->
             <div class="form-inline mb-3">
                 <select id="adminFilterStatus" class="form-control mr-2">
                     <option value="">Todos los Estados</option>
@@ -98,9 +113,19 @@
                     <option value="en proceso">En Proceso</option>
                     <option value="cerrado">Cerrado</option>
                 </select>
+                <select id="adminFilterCompany" class="form-control mr-2">
+                    <option value="">Todas las Compañías</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
+            <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
                 <thead>
