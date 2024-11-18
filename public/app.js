@@ -1,7 +1,8 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -30,6 +31,7 @@ document.getElementById("adminLogin").addEventListener("click", () => {
             document.getElementById("adminInterface").style.display = "block";
             mostrarTickets(true);
             cargarEstadisticas();
+            calcularKpiMensual();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -120,7 +122,7 @@ function mostrarTickets(isAdmin) {
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
 
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 6}" class="text-center">Cargando tickets...</td></tr>`;
 
@@ -218,7 +220,6 @@ function cargarEstadisticas() {
         `;
     });
 }
-import { jsPDF } from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js";
 
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
@@ -259,6 +260,14 @@ function calcularKpiMensual() {
         kpiCerrados.textContent = ticketsCerrados;
         kpiPromedioResolucion.textContent = promedioResolucion;
         kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+        // Manejo de caso sin tickets
+        if (totalTickets === 0) {
+            kpiTotal.textContent = "0";
+            kpiCerrados.textContent = "0";
+            kpiPromedioResolucion.textContent = "N/A";
+            kpiPorcentajeCerrados.textContent = "0%";
+        }
     });
 }
 
@@ -270,17 +279,17 @@ document.getElementById("downloadKpiPdf").addEventListener("click", () => {
     const promedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
     const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
 
+    doc.setFont("helvetica", "bold");
     doc.text("KPI Mensual de Tickets", 10, 10);
+    doc.setFont("helvetica", "normal");
     doc.text(`Total de Tickets: ${totalTickets}`, 10, 20);
     doc.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
     doc.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
     doc.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
 
     doc.save("kpi_mensual.pdf");
+    alert("El KPI mensual se ha descargado correctamente.");
 });
-
-// Llamar al cálculo del KPI cuando se cargue la interfaz del administrador
-document.getElementById("adminLogin").addEventListener("click", calcularKpiMensual);
 
 // Event listeners para aplicar filtros
 document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
