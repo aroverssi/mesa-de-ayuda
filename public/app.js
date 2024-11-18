@@ -2,7 +2,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -15,10 +14,9 @@ const firebaseConfig = {
     measurementId: "G-0KBEFHH7P9"
 };
 
-// Inicializar Firebase, Firestore, Storage y Auth
+// Inicializar Firebase, Firestore y Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Manejo de la selección de rol
@@ -81,18 +79,10 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const descripcion = document.getElementById("descripcion").value;
     const teamviewerId = document.getElementById("teamviewer_id").value || "";
     const password = document.getElementById("password").value || "";
-    const imagenFile = document.getElementById("imagen").files[0];
 
     const consecutivo = await obtenerConsecutivo();
 
     try {
-        let imagenURL = "";
-        if (imagenFile) {
-            const storageRef = ref(storage, `tickets/${consecutivo}_${imagenFile.name}`);
-            await uploadBytes(storageRef, imagenFile);
-            imagenURL = await getDownloadURL(storageRef);
-        }
-
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
@@ -104,7 +94,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
-            imagenURL,
             comentarios: ""
         });
         alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
