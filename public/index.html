@@ -6,6 +6,7 @@
     <title>Mesa de Ayuda</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Agregar la librería jsPDF como script global -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script type="module" src="app.js"></script>
     <style>
@@ -59,6 +60,14 @@
                         <label for="descripcion">Descripción del problema</label>
                         <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="teamviewer_id">ID TeamViewer <small>(En caso de necesitar asistencia remota)</small></label>
+                        <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña TW</label>
+                        <input type="text" id="password" class="form-control" placeholder="Contraseña TeamViewer">
+                    </div>
                     <button type="submit" class="btn btn-primary">Enviar Ticket</button>
                 </form>
             </div>
@@ -80,6 +89,8 @@
                     <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
                     <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                 </select>
+                <input type="date" id="userFilterStartDate" class="form-control mr-2">
+                <input type="date" id="userFilterEndDate" class="form-control mr-2">
                 <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
@@ -122,7 +133,18 @@
                     <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
                     <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                 </select>
+                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
+                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
+            </div>
+
+            <h3 class="mt-5">KPI Mensual</h3>
+            <div id="kpiContainer">
+                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+                <button id="downloadKpiPdf" class="btn btn-primary mt-3" aria-label="Descargar KPI mensual en PDF">Descargar KPI en PDF</button>
             </div>
 
             <!-- Tablero de Tickets para Administrador -->
@@ -135,14 +157,23 @@
                         <th>Compañía</th>
                         <th>Correo Electrónico</th>
                         <th>Descripción</th>
+                        <th>ID TeamViewer</th>
+                        <th>Contraseña TW</th>
                         <th>Estado</th>
+                        <th>Fecha de Inicio</th>
+                        <th>Fecha de Resolución</th>
                         <th>Comentarios</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
+            <h3 class="mt-5">Estadísticas</h3>
+            <ul id="adminStats" class="list-group mt-3">
+                <!-- Estadísticas del administrador se cargarán aquí -->
+            </ul>
         </div>
     </div>
 </body>
 </html>
+
