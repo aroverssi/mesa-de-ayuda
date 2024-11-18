@@ -29,8 +29,6 @@ document.getElementById("adminLogin").addEventListener("click", () => {
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
             mostrarTickets(true);
-            cargarEstadisticas();
-            calcularKpiMensual();
         })
         .catch((error) => {
             console.error("Error de autenticación:", error);
@@ -78,8 +76,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value;
     const descripcion = document.getElementById("descripcion").value;
-    const teamviewerId = document.getElementById("teamviewer_id").value || "";
-    const password = document.getElementById("password").value || "";
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -95,8 +91,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             company,
             email,
             descripcion,
-            teamviewerId,
-            password,
             estado: "pendiente",
             fechaApertura: new Date(),
             fechaCierre: null,
@@ -112,22 +106,11 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
 // Función para mostrar tickets con el correo incluido
 function mostrarTickets(isAdmin) {
-    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
+    const ticketTable = document.getElementById(isAdmin ? "ticketTableAdmin" : "ticketTableUser").getElementsByTagName("tbody")[0];
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
 
     let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
+    if (estadoFiltro) consulta = query(consulta, where("estado", "==", estadoFiltro), orderBy("fechaApertura", "asc"));
 
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 7}" class="text-center">Cargando tickets...</td></tr>`;
 
@@ -142,21 +125,20 @@ function mostrarTickets(isAdmin) {
                     <td>${ticket.consecutivo}</td>
                     <td>${ticket.usuario}</td>
                     <td>${ticket.company}</td>
-                    <td>${ticket.descripcion}</td>
                     <td>${ticket.email}</td>
-                    <td>${ticket.teamviewerId}</td>
-                    <td>${ticket.password}</td>
+                    <td>${ticket.descripcion}</td>
                     <td>${ticket.estado}</td>
-                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                     <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>
                 `
                 : `
                     <td>${ticket.consecutivo}</td>
                     <td>${ticket.usuario}</td>
                     <td>${ticket.company}</td>
-                    <td>${ticket.descripcion}</td>
                     <td>${ticket.email}</td>
+                    <td>${ticket.descripcion}</td>
                     <td>${ticket.estado}</td>
                     <td>${ticket.comentarios || "Sin comentarios"}</td>
                 `;
@@ -165,3 +147,26 @@ function mostrarTickets(isAdmin) {
         });
     });
 }
+
+// Función para actualizar un ticket
+async function actualizarTicket(ticketId) {
+    const nuevoEstado = prompt("Ingrese el nuevo estado del ticket (pendiente, en proceso, cerrado):").toLowerCase();
+
+    if (!["pendiente", "en proceso", "cerrado"].includes(nuevoEstado)) {
+        alert("Estado inválido. Intente de nuevo.");
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, "tickets", ticketId), {
+            estado: nuevoEstado,
+            fechaCierre: nuevoEstado === "cerrado" ? new Date() : null,
+        });
+        alert("Ticket actualizado con éxito.");
+    } catch (error) {
+        console.error("Error al actualizar el ticket:", error);
+    }
+}
+
+// Exportar funciones globales para acceso desde el HTML
+window.actualizarTicket = actualizarTicket;
