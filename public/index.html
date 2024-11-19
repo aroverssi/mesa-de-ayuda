@@ -15,9 +15,6 @@
             border: 1px solid #ddd;
             padding: 15px;
         }
-        .table-container {
-            overflow-x: auto;
-        }
     </style>
 </head>
 <body>
@@ -104,22 +101,21 @@
             </div>
 
             <!-- Tablero de Tickets para Usuario -->
-            <div class="table-container">
-                <table class="table table-bordered" id="ticketTableUser">
-                    <thead>
-                        <tr>
-                            <th>Número de Ticket</th>
-                            <th>Usuario</th>
-                            <th>Compañía</th>
-                            <th>Correo Electrónico</th>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th>Comentarios</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
+            <table class="table table-bordered" id="ticketTableUser">
+                <thead>
+                    <tr>
+                        <th>Número de Ticket</th>
+                        <th>Usuario</th>
+                        <th>Compañía</th>
+                        <th>Correo Electrónico</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Comentarios</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
 
         <!-- Interfaz de Administrador -->
@@ -155,29 +151,28 @@
             </div>
 
             <!-- Tablero de Tickets para Administrador -->
-            <div class="table-container">
-                <table class="table table-bordered" id="ticketTableAdmin">
-                    <thead>
-                        <tr>
-                            <th>Número de Ticket</th>
-                            <th>Usuario</th>
-                            <th>Compañía</th>
-                            <th>Correo Electrónico</th>
-                            <th>Descripción</th>
-                            <th>ID TeamViewer</th>
-                            <th>Contraseña TW</th>
-                            <th>Estado</th>
-                            <th>Fecha de Inicio</th>
-                            <th>Fecha de Resolución</th>
-                            <th>Comentarios</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
+            <table class="table table-bordered" id="ticketTableAdmin">
+                <thead>
+                    <tr>
+                        <th>Número de Ticket</th>
+                        <th>Usuario</th>
+                        <th>Compañía</th>
+                        <th>Correo Electrónico</th>
+                        <th>Descripción</th>
+                        <th>ID TeamViewer</th>
+                        <th>Contraseña TW</th>
+                        <th>Estado</th>
+                        <th>Fecha de Inicio</th>
+                        <th>Fecha de Resolución</th>
+                        <th>Comentarios</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
 
-            <!-- KPI Mensual -->
+            <!-- Estadísticas -->
             <h3 class="mt-5">KPI Mensual</h3>
             <div id="kpiContainer">
                 <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
@@ -190,4 +185,3 @@
     </div>
 </body>
 </html>
-
