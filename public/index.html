@@ -125,73 +125,100 @@
             </table>
         </div>
 
-        <!-- Interfaz de Administrador -->
-        <div id="adminInterface" style="display: none;">
-            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-            
-            <!-- Filtros para Administrador -->
-            <div class="form-inline mb-3">
-                <select id="adminFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="adminFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
-                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
-                <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+<!-- Interfaz de Administrador -->
+<div id="adminInterface" style="display: none;">
+    <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+    
+    <!-- Filtros para Administrador -->
+    <div class="form-inline mb-3">
+        <select id="adminFilterStatus" class="form-control mr-2">
+            <option value="">Todos los Estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en proceso">En Proceso</option>
+            <option value="cerrado">Cerrado</option>
+        </select>
+        <select id="adminFilterCompany" class="form-control mr-2">
+            <option value="">Todas las Compañías</option>
+            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+            <option value="Allpack">Allpack</option>
+            <option value="Business On Line">Business On Line</option>
+            <option value="Zona Franca">Zona Franca</option>
+            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+        </select>
+        <input type="date" id="adminFilterStartDate" class="form-control mr-2">
+        <input type="date" id="adminFilterEndDate" class="form-control mr-2">
+        <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
+    </div>
 
-            <!-- Botones de Paginación para Administrador -->
-            <div class="d-flex justify-content-between mb-3">
-                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
-                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
-            </div>
+    <!-- Botones de Paginación para Administrador -->
+    <div class="d-flex justify-content-between mb-3">
+        <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
+        <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
+    </div>
 
-            <!-- Tablero de Tickets para Administrador -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableAdmin">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Compañía</th>
-                        <th>Correo Electrónico</th>
-                        <th>Descripción</th>
-                        <th>ID TeamViewer</th>
-                        <th>Contraseña TW</th>
-                        <th>Estado</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Resolución</th>
-                        <th>Comentarios</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+    <!-- Tablero de Tickets para Administrador -->
+    <h2 class="text-center mb-4">Tablero de Tickets</h2>
+    <table class="table table-bordered" id="ticketTableAdmin">
+        <thead>
+            <tr>
+                <th>Número de Ticket</th>
+                <th>Usuario</th>
+                <th>Compañía</th>
+                <th>Correo Electrónico</th>
+                <th>Descripción</th>
+                <th>ID TeamViewer</th>
+                <th>Contraseña TW</th>
+                <th>Estado</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Resolución</th>
+                <th>Comentarios</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-            <!-- Estadísticas -->
-            <h3 class="mt-5">Estadísticas del Administrador</h3>
-            <ul id="adminStats"></ul>
+    <!-- Estadísticas -->
+    <h3 class="mt-5">Estadísticas del Administrador</h3>
+    <ul id="adminStats"></ul>
 
-            <h3 class="mt-5">KPI Mensual</h3>
-            <div id="kpiContainer">
-                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-                <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
-            </div>
+    <h3 class="mt-5">KPI Mensual</h3>
+    <div id="kpiContainer">
+        <!-- Selectores para Mes y Año -->
+        <div class="form-inline mb-3">
+            <label for="kpiMes" class="mr-2">Mes:</label>
+            <select id="kpiMes" class="form-control mr-2">
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
+
+            <label for="kpiAnio" class="mr-2">Año:</label>
+            <select id="kpiAnio" class="form-control mr-2">
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+            </select>
         </div>
+
+        <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+        <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+        <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+        <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+        <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
+    </div>
+</div>
+
     </div>
 </body>
 </html>
