@@ -233,28 +233,39 @@ async function actualizarTicket(ticketId) {
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
+    if (!statsList) {
+        console.error("El elemento adminStats no se encuentra en el DOM.");
+        return;
+    }
+
     let totalTickets = 0,
         totalCerrados = 0,
         sumaResolucion = 0;
 
     onSnapshot(collection(db, "tickets"), (snapshot) => {
+        if (snapshot.empty) {
+            statsList.innerHTML = `<li>No hay datos disponibles para mostrar.</li>`;
+            return;
+        }
+
         totalTickets = snapshot.size;
         totalCerrados = 0;
         sumaResolucion = 0;
 
         snapshot.forEach((doc) => {
             const ticket = doc.data();
-            if (ticket.estado === "cerrado") {
-                totalCerrados++;
+            if (ticket.estado === "cerrado" && ticket.fechaCierre && ticket.fechaApertura) {
                 const tiempoResolucion =
                     (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
                 sumaResolucion += tiempoResolucion;
+                totalCerrados++;
             }
         });
 
         const promedioResolucion = totalCerrados
             ? (sumaResolucion / totalCerrados).toFixed(2)
             : "N/A";
+
         statsList.innerHTML = `
             <li>Total de Tickets: ${totalTickets}</li>
             <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
