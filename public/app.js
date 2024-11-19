@@ -23,31 +23,6 @@ const auth = getAuth(app);
 let lastVisible = null;
 let firstVisible = null;
 
-// Importar las funciones necesarias desde el SDK de Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-// Configuración de Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
-    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
-    projectId: "mesa-de-ayuda-f5a6a",
-    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
-    messagingSenderId: "912872235241",
-    appId: "1:912872235241:web:2fcf8f473413562c931078",
-    measurementId: "G-0KBEFHH7P9"
-};
-
-// Inicializar Firebase, Firestore y Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// Variables para paginación
-let lastVisible = null;
-let firstVisible = null;
-
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("adminLogin")?.addEventListener("click", () => {
