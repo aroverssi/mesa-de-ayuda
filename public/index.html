@@ -110,6 +110,11 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            <!-- Botones de Paginación -->
+            <div class="d-flex justify-content-between">
+                <button id="prevPageUser" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageUser" class="btn btn-secondary">Página Siguiente</button>
+            </div>
         </div>
 
         <!-- Interfaz de Administrador -->
@@ -138,15 +143,6 @@
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
-            <h3 class="mt-5">KPI Mensual</h3>
-            <div id="kpiContainer">
-                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-                <button id="downloadKpiPdf" class="btn btn-primary mt-3" aria-label="Descargar KPI mensual en PDF">Descargar KPI en PDF</button>
-            </div>
-
             <!-- Tablero de Tickets para Administrador -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableAdmin">
@@ -168,6 +164,12 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            <!-- Botones de Paginación -->
+            <div class="d-flex justify-content-between">
+                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
+            </div>
+
             <h3 class="mt-5">Estadísticas</h3>
             <ul id="adminStats" class="list-group mt-3">
                 <!-- Estadísticas del administrador se cargarán aquí -->
@@ -176,6 +178,3 @@
     </div>
 </body>
 </html>
-
-
-
