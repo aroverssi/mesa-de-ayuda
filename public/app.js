@@ -149,65 +149,71 @@ async function cargarPagina(isAdmin, direction = "next") {
 
     consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
-    if (direction === "next" && lastVisible) {
-        consulta = query(consulta, startAfter(lastVisible), limit(10));
-    } else if (direction === "prev" && firstVisible) {
-        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-    } else {
-        consulta = query(consulta, limit(10));
-    }
+    try {
+        if (direction === "next" && lastVisible) {
+            consulta = query(consulta, startAfter(lastVisible), limit(10));
+        } else if (direction === "prev" && firstVisible) {
+            consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
+        } else {
+            consulta = query(consulta, limit(10));
+        }
 
-    const snapshot = await getDocs(consulta);
+        const snapshot = await getDocs(consulta);
 
-    if (!snapshot.empty) {
-        lastVisible = snapshot.docs[snapshot.docs.length - 1];
-        firstVisible = snapshot.docs[0];
+        if (!snapshot.empty) {
+            lastVisible = snapshot.docs[snapshot.docs.length - 1];
+            firstVisible = snapshot.docs[0];
 
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
+            ticketTable.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const ticket = doc.data();
+                const row = document.createElement("tr");
 
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.teamviewerId}</td>
-                    <td>${ticket.password}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    <td>
-                        <select id="estadoSelect_${doc.id}">
-                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                        </select>
-                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                    </td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                `;
+                row.innerHTML = isAdmin
+                    ? `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.teamviewerId}</td>
+                        <td>${ticket.password}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                        <td>
+                            <select id="estadoSelect_${doc.id}">
+                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                            </select>
+                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                        </td>
+                    `
+                    : `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    `;
 
-            ticketTable.appendChild(row);
-        });
+                ticketTable.appendChild(row);
+            });
 
-        document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-        document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
-    } else {
-        alert("No hay más tickets en esta dirección.");
+            document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
+            document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
+        } else {
+            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
+            lastVisible = null;
+            firstVisible = null;
+        }
+    } catch (error) {
+        console.error("Error al cargar la página:", error);
     }
 }
 
@@ -280,7 +286,34 @@ function cargarEstadisticas() {
         }
     );
 }
+// Cargar estadísticas automáticamente al cambiar tickets
+function activarActualizacionEnTiempoReal(isAdmin) {
+    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
+    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
 
+    onSnapshot(collection(db, "tickets"), (snapshot) => {
+        ticketTable.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+            row.innerHTML = isAdmin
+                ? `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.email}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.estado}</td>
+                `
+                : `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.estado}</td>
+                `;
+            ticketTable.appendChild(row);
+        });
+    });
+}
 
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
