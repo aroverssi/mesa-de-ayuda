@@ -309,3 +309,4 @@ function calcularKpiMensual() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 
+
