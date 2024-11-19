@@ -89,11 +89,9 @@
                     <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
                     <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
                 </select>
-                <input type="email" id="emailFilter" class="form-control mr-2" placeholder="Correo Electrónico">
                 <input type="date" id="userFilterStartDate" class="form-control mr-2">
                 <input type="date" id="userFilterEndDate" class="form-control mr-2">
-                <button id="userFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
-                <button id="clearFilters" class="btn btn-secondary">Limpiar Filtros</button>
+                <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
             <!-- Tablero de Tickets para Usuario -->
@@ -142,7 +140,6 @@
 
             <h3 class="mt-5">KPI Mensual</h3>
             <div id="kpiContainer">
-                <p><strong>Mes y Año:</strong> <span id="kpiMes"></span></p>
                 <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
                 <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
                 <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
@@ -172,8 +169,11 @@
                 <tbody></tbody>
             </table>
             <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3"></ul>
+            <ul id="adminStats" class="list-group mt-3">
+                <!-- Estadísticas del administrador se cargarán aquí -->
+            </ul>
         </div>
     </div>
 </body>
 </html>
+
