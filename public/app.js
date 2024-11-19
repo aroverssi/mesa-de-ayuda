@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// Función para obtener el número de ticket consecutivo
+// Función para cargar el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
     const docSnap = await getDoc(docRef);
@@ -181,6 +181,15 @@ async function cargarPagina(isAdmin, direction = "next") {
                     <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
                     <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                     <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    <td>
+                        <select id="estadoSelect_${doc.id}">
+                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                        </select>
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>
                 `
                 : `
                     <td>${ticket.consecutivo}</td>
@@ -194,11 +203,8 @@ async function cargarPagina(isAdmin, direction = "next") {
 
             ticketTable.appendChild(row);
         });
-
-        document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-        document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
     } else {
-        alert("No hay más tickets en esta dirección.");
+        ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No se encontraron resultados.</td></tr>`;
     }
 }
 
@@ -252,56 +258,6 @@ function cargarEstadisticas() {
             <li>Tickets Cerrados: ${totalCerrados}</li>
             <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
         `;
-    });
-}
-
-// Función para calcular y mostrar el KPI mensual
-function calcularKpiMensual() {
-    const kpiTotal = document.getElementById("kpiTotal");
-    const kpiCerrados = document.getElementById("kpiCerrados");
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
-
-    let totalTickets = 0;
-    let ticketsCerrados = 0;
-    let sumaResolucion = 0;
-
-    const inicioMes = new Date();
-    inicioMes.setDate(1);
-    inicioMes.setHours(0, 0, 0, 0);
-
-    onSnapshot(query(collection(db, "tickets"), where("fechaApertura", ">=", inicioMes)), (snapshot) => {
-        totalTickets = snapshot.size;
-        ticketsCerrados = 0;
-        sumaResolucion = 0;
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-                ticketsCerrados++;
-                const tiempoResolucion = 
-                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                sumaResolucion += tiempoResolucion;
-            }
-        });
-
-        const promedioResolucion = ticketsCerrados ? (sumaResolucion / ticketsCerrados).toFixed(2) : "N/A";
-        const porcentajeCerrados = totalTickets
-            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-            : "0";
-
-        kpiTotal.textContent = totalTickets;
-        kpiCerrados.textContent = ticketsCerrados;
-        kpiPromedioResolucion.textContent = promedioResolucion;
-        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
-
-        // Manejo de caso sin tickets
-        if (totalTickets === 0) {
-            kpiTotal.textContent = "0";
-            kpiCerrados.textContent = "0";
-            kpiPromedioResolucion.textContent = "N/A";
-            kpiPorcentajeCerrados.textContent = "0%";
-        }
     });
 }
 
