@@ -366,6 +366,29 @@ function calcularKpiMensual() {
         }
     });
 }
+// Función para descargar el KPI en PDF
+function descargarKpiPdf() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    // Obtener los datos del KPI
+    const kpiTotal = document.getElementById("kpiTotal").textContent;
+    const kpiCerrados = document.getElementById("kpiCerrados").textContent;
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
+
+    // Agregar contenido al PDF
+    pdf.setFontSize(16);
+    pdf.text("Reporte Mensual de KPI", 10, 10);
+    pdf.setFontSize(12);
+    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 30);
+    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 40);
+    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 50);
+    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 60);
+
+    // Descargar el PDF
+    pdf.save("Reporte_KPI_Mensual.pdf");
+}
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
