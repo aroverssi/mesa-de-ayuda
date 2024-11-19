@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
@@ -104,12 +104,16 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar tickets con filtros
+// Variables para paginación
+let lastVisible = null;
+const pageSize = 10;
+
+// Función para mostrar tickets con filtros y paginación
 function mostrarTickets(isAdmin) {
     const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const emailFiltro = document.getElementById("emailFilter")?.value || "";
     const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
     const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
 
@@ -118,15 +122,23 @@ function mostrarTickets(isAdmin) {
 
     if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
+    if (emailFiltro) filtros.push(where("email", "==", emailFiltro));
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(pageSize));
+
+    if (lastVisible) {
+        consulta = query(consulta, startAfter(lastVisible));
+    }
 
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando tickets...</td></tr>`;
 
     onSnapshot(consulta, (snapshot) => {
         ticketTable.innerHTML = "";
+        if (!snapshot.empty) {
+            lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        }
         snapshot.forEach((doc) => {
             const ticket = doc.data();
             const row = document.createElement("tr");
@@ -169,65 +181,21 @@ function mostrarTickets(isAdmin) {
     });
 }
 
-// Función para actualizar ticket
-async function actualizarTicket(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
+// Función para limpiar filtros
+document.getElementById("clearFilters").addEventListener("click", () => {
+    document.getElementById("userFilterStatus").value = "";
+    document.getElementById("userFilterCompany").value = "";
+    document.getElementById("emailFilter").value = "";
+    mostrarTickets(false);
+});
 
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            comentarios: nuevoComentario,
-            fechaCierre: fechaCierre,
-        });
-
-        alert(`Ticket actualizado con éxito.`);
-    } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
-    }
-}
-
-// Cargar estadísticas del administrador
-function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    let totalTickets = 0,
-        totalCerrados = 0,
-        sumaResolucion = 0;
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        totalTickets = snapshot.size;
-        totalCerrados = 0;
-        sumaResolucion = 0;
-
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            if (ticket.estado === "cerrado") {
-                totalCerrados++;
-                const tiempoResolucion =
-                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                sumaResolucion += tiempoResolucion;
-            }
-        });
-
-        const promedioResolucion = totalCerrados
-            ? (sumaResolucion / totalCerrados).toFixed(2)
-            : "N/A";
-        statsList.innerHTML = `
-            <li>Total de Tickets: ${totalTickets}</li>
-            <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-            <li>Tickets Cerrados: ${totalCerrados}</li>
-            <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-        `;
-    });
-}
-
-// Función para calcular y mostrar el KPI mensual
+// Actualizar KPI con mes y año
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
     const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
+    const kpiMes = document.getElementById("kpiMes");
 
     let totalTickets = 0;
     let ticketsCerrados = 0;
@@ -257,12 +225,14 @@ function calcularKpiMensual() {
             ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
             : "0";
 
+        const mesActual = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(inicioMes);
+
         kpiTotal.textContent = totalTickets;
         kpiCerrados.textContent = ticketsCerrados;
         kpiPromedioResolucion.textContent = promedioResolucion;
         kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+        kpiMes.textContent = mesActual;
 
-        // Manejo de caso sin tickets
         if (totalTickets === 0) {
             kpiTotal.textContent = "0";
             kpiCerrados.textContent = "0";
@@ -272,17 +242,18 @@ function calcularKpiMensual() {
     });
 }
 
-// Función para descargar el KPI en PDF
+// Función para descargar KPI con mes y año
 document.getElementById("downloadKpiPdf").addEventListener("click", () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    const mesActual = document.getElementById("kpiMes").textContent;
     const totalTickets = document.getElementById("kpiTotal").textContent;
     const ticketsCerrados = document.getElementById("kpiCerrados").textContent;
     const promedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
     const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
 
     doc.setFont("helvetica", "bold");
-    doc.text("KPI Mensual de Tickets", 10, 10);
+    doc.text(`KPI Mensual de Tickets (${mesActual})`, 10, 10);
     doc.setFont("helvetica", "normal");
     doc.text(`Total de Tickets: ${totalTickets}`, 10, 20);
     doc.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
@@ -293,9 +264,6 @@ document.getElementById("downloadKpiPdf").addEventListener("click", () => {
     alert("El KPI mensual se ha descargado correctamente.");
 });
 
-// Event listeners para aplicar filtros
-document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
-document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
-
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
