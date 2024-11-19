@@ -370,6 +370,7 @@ function calcularKpiMensual() {
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
+window.descargarKpiPdf = descargarKpiPdf;
 
 
 
