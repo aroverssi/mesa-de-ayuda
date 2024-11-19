@@ -126,6 +126,110 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
+// Función para cargar tickets con filtros y paginación
+async function cargarPagina(isAdmin, direction = "next") {
+    const ticketTable = isAdmin
+        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
+        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
+
+    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
+    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
+
+    let consulta = collection(db, "tickets");
+    const filtros = [];
+
+    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
+    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
+    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
+    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
+
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
+
+    if (direction === "next" && lastVisible) {
+        consulta = query(consulta, startAfter(lastVisible), limit(10));
+    } else if (direction === "prev" && firstVisible) {
+        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
+    } else {
+        consulta = query(consulta, limit(10));
+    }
+
+    const snapshot = await getDocs(consulta);
+
+    if (!snapshot.empty) {
+        lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        firstVisible = snapshot.docs[0];
+
+        ticketTable.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+
+            row.innerHTML = isAdmin
+                ? `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.email}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.teamviewerId}</td>
+                    <td>${ticket.password}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    <td>
+                        <select id="estadoSelect_${doc.id}">
+                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                        </select>
+                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                    </td>
+                `
+                : `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.email}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.estado}</td>
+                    <td>${ticket.comentarios || "Sin comentarios"}</td>
+                `;
+
+            ticketTable.appendChild(row);
+        });
+
+        document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
+        document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
+    } else {
+        alert("No hay más tickets en esta dirección.");
+    }
+}
+
+// Función para actualizar ticket
+async function actualizarTicket(ticketId) {
+    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
+    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
+    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
+
+    try {
+        await updateDoc(doc(db, "tickets", ticketId), {
+            estado: nuevoEstado,
+            comentarios: nuevoComentario,
+            fechaCierre: fechaCierre,
+        });
+
+        alert(`Ticket actualizado con éxito.`);
+    } catch (error) {
+        console.error("Error al actualizar el ticket: ", error);
+    }
+}
+
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
@@ -160,8 +264,59 @@ function cargarEstadisticas() {
     });
 }
 
+// Función para calcular y mostrar el KPI mensual
+function calcularKpiMensual() {
+    const kpiTotal = document.getElementById("kpiTotal");
+    const kpiCerrados = document.getElementById("kpiCerrados");
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
+
+    let totalTickets = 0;
+    let ticketsCerrados = 0;
+    let sumaResolucion = 0;
+
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+
+    onSnapshot(query(collection(db, "tickets"), where("fechaApertura", ">=", inicioMes)), (snapshot) => {
+        totalTickets = snapshot.size;
+        ticketsCerrados = 0;
+        sumaResolucion = 0;
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+                ticketsCerrados++;
+                const tiempoResolucion = 
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        const promedioResolucion = ticketsCerrados ? (sumaResolucion / ticketsCerrados).toFixed(2) : "N/A";
+        const porcentajeCerrados = totalTickets
+            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+            : "0";
+
+        kpiTotal.textContent = totalTickets;
+        kpiCerrados.textContent = ticketsCerrados;
+        kpiPromedioResolucion.textContent = promedioResolucion;
+        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+        // Manejo de caso sin tickets
+        if (totalTickets === 0) {
+            kpiTotal.textContent = "0";
+            kpiCerrados.textContent = "0";
+            kpiPromedioResolucion.textContent = "N/A";
+            kpiPorcentajeCerrados.textContent = "0%";
+        }
+    });
+}
+
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
+
 
 
