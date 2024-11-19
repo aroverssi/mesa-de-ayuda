@@ -23,120 +23,101 @@ const auth = getAuth(app);
 let lastVisible = null;
 let firstVisible = null;
 
-// Manejo de la selección de rol
+// Inicializar eventos cuando el DOM esté listo
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("adminLogin")?.addEventListener("click", () => {
-        const email = prompt("Ingrese su correo de administrador:");
-        const password = prompt("Ingrese su contraseña:");
-
-        signInWithEmailAndPassword(auth, email, password)
-            .then(() => {
-                document.getElementById("roleSelection").style.display = "none";
-                document.getElementById("adminInterface").style.display = "block";
-                cargarPagina(true, "next");
-                cargarEstadisticas();
-                calcularKpiMensual();
-            })
-            .catch((error) => {
-                console.error("Error de autenticación:", error);
-                alert("Credenciales incorrectas. Por favor, intente de nuevo.");
-            });
-    });
-
-    document.getElementById("userLogin")?.addEventListener("click", () => {
-        document.getElementById("roleSelection").style.display = "none";
-        document.getElementById("userInterface").style.display = "block";
-        cargarPagina(false, "next");
-    });
-
-    document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
-        document.getElementById("userInterface").style.display = "none";
-        document.getElementById("roleSelection").style.display = "block";
-    });
-
+    // Manejo de roles
+    document.getElementById("adminLogin")?.addEventListener("click", loginAdmin);
+    document.getElementById("userLogin")?.addEventListener("click", () => toggleView("user"));
+    document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => toggleView("role"));
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
-        document.getElementById("adminInterface").style.display = "none";
-        document.getElementById("roleSelection").style.display = "block";
+        toggleView("role");
         auth.signOut();
     });
 
+    // Eventos de paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
     document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
     document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
     document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
 
-    document.getElementById("userFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(false, "next");
-    });
+    // Filtros
+    document.getElementById("userFilterApply")?.addEventListener("click", () => aplicarFiltros(false));
+    document.getElementById("adminFilterApply")?.addEventListener("click", () => aplicarFiltros(true));
 
-    document.getElementById("adminFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(true, "next");
-    });
-
+    // Descarga de KPI
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
+
+    // Enviar ticket
+    document.getElementById("ticketForm")?.addEventListener("submit", enviarTicket);
 });
 
-// Función para calcular y mostrar el KPI mensual
-function calcularKpiMensual() {
-    const kpiTotal = document.getElementById("kpiTotal");
-    const kpiCerrados = document.getElementById("kpiCerrados");
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
-
-    let totalTickets = 0;
-    let ticketsCerrados = 0;
-    let sumaResolucion = 0;
-
-    const mesSeleccionado = document.getElementById("kpiMes")?.value || new Date().getMonth() + 1;
-    const anioSeleccionado = document.getElementById("kpiAnio")?.value || new Date().getFullYear();
-
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
-
-    onSnapshot(
-        query(
-            collection(db, "tickets"),
-            where("fechaApertura", ">=", inicioMes),
-            where("fechaApertura", "<=", finMes)
-        ),
-        (snapshot) => {
-            totalTickets = snapshot.size;
-            ticketsCerrados = 0;
-            sumaResolucion = 0;
-
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-                    ticketsCerrados++;
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                }
-            });
-
-            const promedioResolucion = ticketsCerrados
-                ? (sumaResolucion / ticketsCerrados).toFixed(2)
-                : "N/A";
-            const porcentajeCerrados = totalTickets
-                ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-                : "0";
-
-            kpiTotal.textContent = totalTickets;
-            kpiCerrados.textContent = ticketsCerrados;
-            kpiPromedioResolucion.textContent = promedioResolucion;
-            kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+// Función para cambiar vistas (role, user, admin)
+function toggleView(view) {
+    const views = {
+        role: () => {
+            document.getElementById("roleSelection").style.display = "block";
+            document.getElementById("userInterface").style.display = "none";
+            document.getElementById("adminInterface").style.display = "none";
+        },
+        user: () => {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("userInterface").style.display = "block";
+        },
+        admin: () => {
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
         }
-    );
+    };
+    views[view]?.();
 }
 
+// Función de login para administrador
+function loginAdmin() {
+    const email = prompt("Ingrese su correo de administrador:");
+    const password = prompt("Ingrese su contraseña:");
 
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+            toggleView("admin");
+            cargarPagina(true, "next");
+            cargarEstadisticas();
+            calcularKpiMensual();
+        })
+        .catch((error) => {
+            console.error("Error de autenticación:", error);
+            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+        });
+}
 
+// Función para enviar ticket
+async function enviarTicket(e) {
+    e.preventDefault();
+    const formData = {
+        usuario: document.getElementById("usuario").value,
+        company: document.getElementById("company").value,
+        email: document.getElementById("email").value,
+        descripcion: document.getElementById("descripcion").value,
+        teamviewerId: document.getElementById("teamviewer_id").value || "",
+        password: document.getElementById("password").value || "",
+        estado: "pendiente",
+        fechaApertura: new Date(),
+        fechaCierre: null,
+        comentarios: ""
+    };
 
-// Función para obtener el número de ticket consecutivo
+    try {
+        const consecutivo = await obtenerConsecutivo();
+        formData.consecutivo = consecutivo;
+
+        await addDoc(collection(db, "tickets"), formData);
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket: ", error);
+    }
+}
+
+// Función para obtener consecutivo de ticket
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
     const docSnap = await getDoc(docRef);
@@ -151,229 +132,63 @@ async function obtenerConsecutivo() {
     }
 }
 
-// Función de envío de ticket
-document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const usuario = document.getElementById("usuario").value;
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value;
-    const descripcion = document.getElementById("descripcion").value;
-    const teamviewerId = document.getElementById("teamviewer_id").value || "";
-    const password = document.getElementById("password").value || "";
-
-    const consecutivo = await obtenerConsecutivo();
-
-    try {
-        await addDoc(collection(db, "tickets"), {
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId,
-            password,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-            fechaCierre: null,
-            consecutivo,
-            comentarios: ""
-        });
-        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket: ", error);
-    }
-});
-
 // Función para cargar tickets con filtros y paginación
 async function cargarPagina(isAdmin, direction = "next") {
-    const ticketTable = isAdmin
-        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
-        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
+    const ticketTable = document.getElementById(isAdmin ? "ticketTableAdmin" : "ticketTableUser").getElementsByTagName("tbody")[0];
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
 
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
+    const filtros = obtenerFiltros(isAdmin);
+    let consulta = query(collection(db, "tickets"), ...filtros, orderBy("fechaApertura", "asc"), limit(10));
 
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
+    if (direction === "next" && lastVisible) consulta = query(consulta, startAfter(lastVisible));
+    if (direction === "prev" && firstVisible) consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
 
     try {
-        if (direction === "next" && lastVisible) {
-            consulta = query(consulta, startAfter(lastVisible), limit(10));
-        } else if (direction === "prev" && firstVisible) {
-            consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-        } else {
-            consulta = query(consulta, limit(10));
-        }
-
         const snapshot = await getDocs(consulta);
 
         if (!snapshot.empty) {
             lastVisible = snapshot.docs[snapshot.docs.length - 1];
             firstVisible = snapshot.docs[0];
-
-            ticketTable.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                const row = document.createElement("tr");
-
-                row.innerHTML = isAdmin
-                    ? `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.teamviewerId}</td>
-                        <td>${ticket.password}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                        <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        </td>
-                    `
-                    : `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    `;
-
-                ticketTable.appendChild(row);
-            });
-
-            document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-            document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
+            actualizarTablaTickets(snapshot, ticketTable, isAdmin);
         } else {
             ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
-            lastVisible = null;
-            firstVisible = null;
         }
     } catch (error) {
         console.error("Error al cargar la página:", error);
     }
 }
 
-// Función para actualizar ticket
-async function actualizarTicket(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
+// Funciones auxiliares
+function obtenerFiltros(isAdmin) {
+    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
+    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
+    const filtros = [];
 
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            comentarios: nuevoComentario,
-            fechaCierre: fechaCierre,
-        });
+    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
+    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
 
-        alert(`Ticket actualizado con éxito.`);
-    } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
-    }
+    return filtros;
 }
 
-// Cargar estadísticas del administrador
-function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    if (!statsList) {
-        console.error("El elemento adminStats no se encuentra en el DOM.");
-        return;
-    }
-
-    let totalTickets = 0,
-        totalCerrados = 0,
-        sumaResolucion = 0;
-
-    onSnapshot(
-        collection(db, "tickets"),
-        (snapshot) => {
-            if (snapshot.empty) {
-                statsList.innerHTML = `<li>No hay datos disponibles para mostrar.</li>`;
-                return;
-            }
-
-            totalTickets = snapshot.size;
-            totalCerrados = 0;
-            sumaResolucion = 0;
-
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre && ticket.fechaApertura) {
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                    totalCerrados++;
-                }
-            });
-
-            const promedioResolucion = totalCerrados
-                ? (sumaResolucion / totalCerrados).toFixed(2)
-                : "N/A";
-
-            statsList.innerHTML = `
-                <li>Total de Tickets: ${totalTickets}</li>
-                <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-                <li>Tickets Cerrados: ${totalCerrados}</li>
-                <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-            `;
-        },
-        (error) => {
-            console.error("Error al obtener los tickets:", error);
-        }
-    );
-}
-// Cargar estadísticas automáticamente al cambiar tickets
-function activarActualizacionEnTiempoReal(isAdmin) {
-    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
-    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.estado}</td>
-                `;
-            ticketTable.appendChild(row);
-        });
+function actualizarTablaTickets(snapshot, table, isAdmin) {
+    table.innerHTML = "";
+    snapshot.forEach((doc) => {
+        const ticket = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${ticket.consecutivo}</td>
+            <td>${ticket.usuario}</td>
+            <td>${ticket.company}</td>
+            <td>${ticket.email}</td>
+            <td>${ticket.descripcion}</td>
+            <td>${ticket.estado}</td>
+            ${isAdmin ? `<td>${ticket.comentarios || "Sin comentarios"}</td>` : ""}
+        `;
+        table.appendChild(row);
     });
 }
 
-// Función para calcular y mostrar el KPI mensual
+// Función para calcular KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -422,26 +237,10 @@ function calcularKpiMensual() {
             kpiCerrados.textContent = ticketsCerrados;
             kpiPromedioResolucion.textContent = promedioResolucion;
             kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
-
-            if (totalTickets === 0) {
-                kpiTotal.textContent = "0";
-                kpiCerrados.textContent = "0";
-                kpiPromedioResolucion.textContent = "N/A";
-                kpiPorcentajeCerrados.textContent = "0%";
-            }
         }
     );
 }
 
-        // Manejo de caso sin tickets
-        if (totalTickets === 0) {
-            kpiTotal.textContent = "0";
-            kpiCerrados.textContent = "0";
-            kpiPromedioResolucion.textContent = "N/A";
-            kpiPorcentajeCerrados.textContent = "0%";
-        }
-    });
-}
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf;
@@ -453,25 +252,19 @@ function descargarKpiPdf() {
     const promedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
     const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
 
-    // Obtener el mes y año seleccionados (puedes ajustar esto según cómo esté implementado)
     const mesSeleccionado = document.getElementById("kpiMes")?.value || "Mes no seleccionado";
     const anioSeleccionado = document.getElementById("kpiAnio")?.value || "Año no seleccionado";
 
-    // Crear el contenido del PDF
     pdf.text(`Reporte KPI - ${mesSeleccionado} ${anioSeleccionado}`, 10, 10);
     pdf.text(`Total de Tickets: ${totalTickets}`, 10, 20);
     pdf.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
     pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
     pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
 
-    // Descargar el PDF
     pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
 
-// Exportar funciones globales para acceso desde el HTML
-window.actualizarTicket = actualizarTicket;
+// Exportar funciones globales
+window.enviarTicket = enviarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
-
-
-
