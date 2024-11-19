@@ -134,6 +134,8 @@ function calcularKpiMensual() {
 }
 
 
+
+
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
