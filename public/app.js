@@ -168,88 +168,6 @@ function mostrarTickets(isAdmin) {
         });
     });
 }
-// Funciones de paginación 
-let lastVisible = null;
-let firstVisible = null;
-
-async function cargarPagina(isAdmin, direction = "next") {
-    const ticketTable = isAdmin
-        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
-        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
-    // Configuración de filtros
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
-
-    // Construcción de consulta con paginación
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-
-    if (direction === "next" && lastVisible) {
-        consulta = query(consulta, startAfter(lastVisible), limit(10));
-    } else if (direction === "prev" && firstVisible) {
-        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-    } else {
-        consulta = query(consulta, limit(10));
-    }
-
-    const snapshot = await getDocs(consulta);
-
-    if (!snapshot.empty) {
-        lastVisible = snapshot.docs[snapshot.docs.length - 1];
-        firstVisible = snapshot.docs[0];
-
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.teamviewerId}</td>
-                    <td>${ticket.password}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                `;
-
-            ticketTable.appendChild(row);
-        });
-    } else {
-        alert("No hay más tickets en esta dirección.");
-    }
-}
-
-// Eventos para botones de paginación
-document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
-document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
-document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
-document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
-
 
 // Función para actualizar ticket
 async function actualizarTicket(ticketId) {
@@ -381,3 +299,4 @@ document.getElementById("adminFilterApply")?.addEventListener("click", () => mos
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+
