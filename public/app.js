@@ -76,6 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
         firstVisible = null;
         cargarPagina(true, "next");
     });
+
+    document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -368,6 +370,7 @@ function calcularKpiMensual() {
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
+
 
 
 
