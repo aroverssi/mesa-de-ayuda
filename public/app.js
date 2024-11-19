@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// Función para cargar el número de ticket consecutivo
+// Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
     const docSnap = await getDoc(docRef);
@@ -125,107 +125,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         console.error("Error al enviar el ticket: ", error);
     }
 });
-
-// Función para cargar tickets con filtros y paginación
-async function cargarPagina(isAdmin, direction = "next") {
-    const ticketTable = isAdmin
-        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
-        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
-
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
-
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-
-    if (direction === "next" && lastVisible) {
-        consulta = query(consulta, startAfter(lastVisible), limit(10));
-    } else if (direction === "prev" && firstVisible) {
-        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-    } else {
-        consulta = query(consulta, limit(10));
-    }
-
-    const snapshot = await getDocs(consulta);
-
-    if (!snapshot.empty) {
-        lastVisible = snapshot.docs[snapshot.docs.length - 1];
-        firstVisible = snapshot.docs[0];
-
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.teamviewerId}</td>
-                    <td>${ticket.password}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    <td>
-                        <select id="estadoSelect_${doc.id}">
-                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                        </select>
-                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                    </td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                `;
-
-            ticketTable.appendChild(row);
-        });
-    } else {
-        ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No se encontraron resultados.</td></tr>`;
-    }
-}
-
-// Función para actualizar ticket
-async function actualizarTicket(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
-
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            comentarios: nuevoComentario,
-            fechaCierre: fechaCierre,
-        });
-
-        alert(`Ticket actualizado con éxito.`);
-    } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
-    }
-}
 
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
