@@ -1,6 +1,6 @@
 // Importar las funciones necesarias desde el SDK de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
@@ -19,41 +19,63 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Variables para paginación
+let lastVisible = null;
+let firstVisible = null;
+
 // Manejo de la selección de rol
-document.getElementById("adminLogin").addEventListener("click", () => {
-    const email = prompt("Ingrese su correo de administrador:");
-    const password = prompt("Ingrese su contraseña:");
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("adminLogin")?.addEventListener("click", () => {
+        const email = prompt("Ingrese su correo de administrador:");
+        const password = prompt("Ingrese su contraseña:");
 
-    signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-            document.getElementById("roleSelection").style.display = "none";
-            document.getElementById("adminInterface").style.display = "block";
-            mostrarTickets(true);
-            cargarEstadisticas();
-            calcularKpiMensual();
-        })
-        .catch((error) => {
-            console.error("Error de autenticación:", error);
-            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
-        });
-});
+        signInWithEmailAndPassword(auth, email, password)
+            .then(() => {
+                document.getElementById("roleSelection").style.display = "none";
+                document.getElementById("adminInterface").style.display = "block";
+                cargarPagina(true, "next");
+                cargarEstadisticas();
+                calcularKpiMensual();
+            })
+            .catch((error) => {
+                console.error("Error de autenticación:", error);
+                alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+            });
+    });
 
-document.getElementById("userLogin").addEventListener("click", () => {
-    document.getElementById("roleSelection").style.display = "none";
-    document.getElementById("userInterface").style.display = "block";
-    mostrarTickets(false);
-});
+    document.getElementById("userLogin")?.addEventListener("click", () => {
+        document.getElementById("roleSelection").style.display = "none";
+        document.getElementById("userInterface").style.display = "block";
+        cargarPagina(false, "next");
+    });
 
-// Botón para regresar a la selección de roles
-document.getElementById("backToUserRoleSelection").addEventListener("click", () => {
-    document.getElementById("userInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
-});
+    document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
+        document.getElementById("userInterface").style.display = "none";
+        document.getElementById("roleSelection").style.display = "block";
+    });
 
-document.getElementById("backToAdminRoleSelection").addEventListener("click", () => {
-    document.getElementById("adminInterface").style.display = "none";
-    document.getElementById("roleSelection").style.display = "block";
-    auth.signOut();
+    document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
+        document.getElementById("adminInterface").style.display = "none";
+        document.getElementById("roleSelection").style.display = "block";
+        auth.signOut();
+    });
+
+    document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
+    document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
+    document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
+    document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
+
+    document.getElementById("userFilterApply")?.addEventListener("click", () => {
+        lastVisible = null;
+        firstVisible = null;
+        cargarPagina(false, "next");
+    });
+
+    document.getElementById("adminFilterApply")?.addEventListener("click", () => {
+        lastVisible = null;
+        firstVisible = null;
+        cargarPagina(true, "next");
+    });
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -104,9 +126,13 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     }
 });
 
-// Función para mostrar tickets con filtros
-function mostrarTickets(isAdmin) {
-    const ticketTable = isAdmin ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0] : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+// Función para cargar tickets con filtros y paginación
+async function cargarPagina(isAdmin, direction = "next") {
+    const ticketTable = isAdmin
+        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
+        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
+
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
 
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
@@ -121,11 +147,22 @@ function mostrarTickets(isAdmin) {
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"), limit(100));
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando tickets...</td></tr>`;
+    if (direction === "next" && lastVisible) {
+        consulta = query(consulta, startAfter(lastVisible), limit(10));
+    } else if (direction === "prev" && firstVisible) {
+        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
+    } else {
+        consulta = query(consulta, limit(10));
+    }
 
-    onSnapshot(consulta, (snapshot) => {
+    const snapshot = await getDocs(consulta);
+
+    if (!snapshot.empty) {
+        lastVisible = snapshot.docs[snapshot.docs.length - 1];
+        firstVisible = snapshot.docs[0];
+
         ticketTable.innerHTML = "";
         snapshot.forEach((doc) => {
             const ticket = doc.data();
@@ -144,15 +181,6 @@ function mostrarTickets(isAdmin) {
                     <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
                     <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                     <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    <td>
-                        <select id="estadoSelect_${doc.id}">
-                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                        </select>
-                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                    </td>
                 `
                 : `
                     <td>${ticket.consecutivo}</td>
@@ -166,7 +194,12 @@ function mostrarTickets(isAdmin) {
 
             ticketTable.appendChild(row);
         });
-    });
+
+        document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
+        document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
+    } else {
+        alert("No hay más tickets en esta dirección.");
+    }
 }
 
 // Función para actualizar ticket
@@ -272,30 +305,7 @@ function calcularKpiMensual() {
     });
 }
 
-// Función para descargar el KPI en PDF
-document.getElementById("downloadKpiPdf").addEventListener("click", () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const totalTickets = document.getElementById("kpiTotal").textContent;
-    const ticketsCerrados = document.getElementById("kpiCerrados").textContent;
-    const promedioResolucion = document.getElementById("kpiPromedioResolucion").textContent;
-    const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados").textContent;
-
-    doc.setFont("helvetica", "bold");
-    doc.text("KPI Mensual de Tickets", 10, 10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Total de Tickets: ${totalTickets}`, 10, 20);
-    doc.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
-    doc.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
-    doc.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
-
-    doc.save("kpi_mensual.pdf");
-    alert("El KPI mensual se ha descargado correctamente.");
-});
-
-// Event listeners para aplicar filtros
-document.getElementById("userFilterApply")?.addEventListener("click", () => mostrarTickets(false));
-document.getElementById("adminFilterApply")?.addEventListener("click", () => mostrarTickets(true));
-
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
+window.cargarPagina = cargarPagina;
+
