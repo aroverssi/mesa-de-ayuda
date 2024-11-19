@@ -6,7 +6,7 @@
     <title>Mesa de Ayuda</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <!-- Agregar la librería jsPDF como script global -->
+    <!-- Agregar la librería jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script type="module" src="app.js"></script>
     <style>
@@ -61,12 +61,12 @@
                         <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="teamviewer_id">ID TeamViewer <small>(En caso de necesitar asistencia remota)</small></label>
+                        <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
                         <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
                     </div>
                     <div class="form-group">
-                        <label for="password">Contraseña TW</label>
-                        <input type="text" id="password" class="form-control" placeholder="Contraseña TeamViewer">
+                        <label for="password">Contraseña TeamViewer</label>
+                        <input type="text" id="password" class="form-control" placeholder="Contraseña">
                     </div>
                     <button type="submit" class="btn btn-primary">Enviar Ticket</button>
                 </form>
@@ -92,6 +92,12 @@
                 <input type="date" id="userFilterStartDate" class="form-control mr-2">
                 <input type="date" id="userFilterEndDate" class="form-control mr-2">
                 <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
+            </div>
+
+            <!-- Botones de Paginación para Usuario -->
+            <div class="d-flex justify-content-between mb-3">
+                <button id="prevPageUser" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageUser" class="btn btn-secondary">Página Siguiente</button>
             </div>
 
             <!-- Tablero de Tickets para Usuario -->
@@ -138,13 +144,10 @@
                 <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
             </div>
 
-            <h3 class="mt-5">KPI Mensual</h3>
-            <div id="kpiContainer">
-                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-                <button id="downloadKpiPdf" class="btn btn-primary mt-3" aria-label="Descargar KPI mensual en PDF">Descargar KPI en PDF</button>
+            <!-- Botones de Paginación para Administrador -->
+            <div class="d-flex justify-content-between mb-3">
+                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
             </div>
 
             <!-- Tablero de Tickets para Administrador -->
@@ -168,12 +171,17 @@
                 </thead>
                 <tbody></tbody>
             </table>
-            <h3 class="mt-5">Estadísticas</h3>
-            <ul id="adminStats" class="list-group mt-3">
-                <!-- Estadísticas del administrador se cargarán aquí -->
-            </ul>
+
+            <!-- Estadísticas -->
+            <h3 class="mt-5">KPI Mensual</h3>
+            <div id="kpiContainer">
+                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+                <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
+            </div>
         </div>
     </div>
 </body>
 </html>
-
