@@ -25,60 +25,85 @@ let firstVisible = null;
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("adminLogin")?.addEventListener("click", () => {
+    document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
         const password = prompt("Ingrese su contraseña:");
 
-        signInWithEmailAndPassword(auth, email, password)
-            .then(() => {
-                document.getElementById("roleSelection").style.display = "none";
-                document.getElementById("adminInterface").style.display = "block";
-                cargarPagina(true, "next");
-                cargarEstadisticas();
-                calcularKpiMensual();
-            })
-            .catch((error) => {
-                console.error("Error de autenticación:", error);
-                alert("Credenciales incorrectas. Por favor, intente de nuevo.");
-            });
+        try {
+            // Autenticación del administrador
+            await signInWithEmailAndPassword(auth, email, password);
+
+            // Mostrar la interfaz del administrador
+            document.getElementById("roleSelection").style.display = "none";
+            document.getElementById("adminInterface").style.display = "block";
+
+            // Cargar el tablero de tickets
+            await cargarPagina(true, "next");
+
+            // Establecer valores predeterminados para los filtros de KPI
+            const defaultMes = new Date().getMonth() + 1; // Mes actual
+            const defaultAnio = new Date().getFullYear(); // Año actual
+            document.getElementById("kpiMes").value = defaultMes;
+            document.getElementById("kpiAnio").value = defaultAnio;
+
+            // Cargar estadísticas y KPI
+            cargarEstadisticas();
+            calcularKpiMensual();
+
+        } catch (error) {
+            console.error("Error de autenticación:", error);
+            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+        }
     });
 
     document.getElementById("userLogin")?.addEventListener("click", () => {
+        // Mostrar la interfaz de usuario
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
+
+        // Cargar el tablero de tickets
         cargarPagina(false, "next");
     });
 
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
+        // Regresar a la selección de rol desde la interfaz de usuario
         document.getElementById("userInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
 
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
+        // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
+
+        // Cerrar sesión del administrador
         auth.signOut();
     });
 
+    // Configuración de eventos de paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
     document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
     document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
     document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
 
+    // Aplicar filtros para el usuario
     document.getElementById("userFilterApply")?.addEventListener("click", () => {
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
+    // Aplicar filtros para el administrador
     document.getElementById("adminFilterApply")?.addEventListener("click", () => {
         lastVisible = null;
         firstVisible = null;
         cargarPagina(true, "next");
     });
 
+    // Descargar el KPI en PDF
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
+
 
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
