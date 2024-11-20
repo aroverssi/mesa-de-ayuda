@@ -121,6 +121,9 @@ async function cargarPagina(isAdmin, direction = "next") {
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault(); // Evitar recarga de página
 
+    const submitButton = document.querySelector('#submitButton'); // ID del botón de envío
+    submitButton.disabled = true; // Deshabilitar el botón temporalmente
+
     const usuario = document.getElementById("usuario").value.trim();
     const company = document.getElementById("company").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -130,6 +133,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 
     if (!usuario || !company || !email || !descripcion) {
         alert("Por favor complete todos los campos obligatorios.");
+        submitButton.disabled = false; // Habilitar el botón si hay error
         return;
     }
 
@@ -152,8 +156,11 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
         alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
+    } finally {
+        submitButton.disabled = false; // Habilitar el botón después del proceso
     }
 });
+
 
 // Obtener número de consecutivo para tickets
 async function obtenerConsecutivo() {
