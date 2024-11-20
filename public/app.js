@@ -173,8 +173,8 @@ document.addEventListener("DOMContentLoaded", () => {
         // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
-        
-// Manejador para el envío de tickets por el usuario
+
+        // Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault(); // Evitar recarga de la página
 
@@ -182,10 +182,10 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value.trim();
     const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim() || null;
-    const password = document.getElementById("password").value.trim() || null;
+    const teamviewerId = document.getElementById("teamviewer_id").value || null;
+    const password = document.getElementById("password").value || null;
 
-    // Validación de campos obligatorios
+    // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
         alert("Por favor complete todos los campos obligatorios.");
         return;
@@ -195,7 +195,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         // Obtener el número consecutivo
         const consecutivo = await obtenerConsecutivo();
 
-        // Agregar el ticket a Firestore
+        // Agregar ticket a Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
@@ -207,7 +207,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
-            comentarios: "" // Inicializar comentarios vacío
+            comentarios: "" // Campo opcional inicializado vacío
         });
 
         alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
@@ -243,7 +243,7 @@ async function obtenerConsecutivo() {
     }
 }
 
-
+        
 
         // Cerrar sesión del administrador
         auth.signOut();
