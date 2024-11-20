@@ -116,6 +116,37 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+// Función para eliminar tickets sin consecutivo
+async function eliminarTicketSinConsecutivo(ticketId) {
+    try {
+        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket sin consecutivo?");
+        if (!confirmacion) return;
+
+        // Obtener el ticket desde la base de datos
+        const ticketRef = doc(db, "tickets", ticketId);
+        const ticketSnap = await getDoc(ticketRef);
+
+        if (!ticketSnap.exists()) {
+            alert("El ticket no existe en la base de datos.");
+            return;
+        }
+
+        const ticketData = ticketSnap.data();
+
+        // Verificar si tiene un consecutivo
+        if (!ticketData.consecutivo) {
+            await deleteDoc(ticketRef);
+            alert("Ticket eliminado con éxito.");
+            cargarPagina(true, "next"); // Recargar la tabla
+        } else {
+            alert("No se puede eliminar este ticket porque tiene un consecutivo.");
+        }
+    } catch (error) {
+        console.error("Error al eliminar el ticket:", error);
+        alert("Ocurrió un problema al intentar eliminar el ticket.");
+    }
+}
+
 
 // Manejador de envío de tickets
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
@@ -566,6 +597,8 @@ function descargarKpiPdf() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
+window.eliminarTicketSinConsecutivo = eliminarTicketSinConsecutivo;
+
 
 
 
