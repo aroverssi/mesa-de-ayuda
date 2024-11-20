@@ -175,7 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-document.getElementById("ticketForm").addEventListener("submit", async (event) => {
+// Manejador para el envío de tickets por el usuario
+document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
     // Obtener valores del formulario
@@ -186,30 +187,45 @@ document.getElementById("ticketForm").addEventListener("submit", async (event) =
     const teamviewerId = document.getElementById("teamviewer_id").value.trim();
     const password = document.getElementById("password").value.trim();
 
+    // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor complete todos los campos obligatorios.");
+        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
         return;
     }
 
     try {
-        // Agregar ticket a Firestore
+        // Validar formato del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Por favor, ingrese un correo electrónico válido.");
+            return;
+        }
+
+        // Crear un ticket en Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null,
+            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
             password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
         });
 
         alert("¡Ticket enviado con éxito!");
-        // Opcional: resetear formulario
+        
+        // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
-        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
+
+        // Mostrar un mensaje de error según el tipo de problema
+        if (error.code === "permission-denied") {
+            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+        } else {
+            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+        }
     }
 });
 
