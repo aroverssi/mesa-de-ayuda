@@ -18,6 +18,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const mesSelect = document.getElementById("kpiMes");
+const anioSelect = document.getElementById("kpiAnio");
+
+if (mesSelect && anioSelect) {
+    mesSelect.addEventListener("change", calcularKpiMensual);
+    anioSelect.addEventListener("change", calcularKpiMensual);
+}
+
 
 // Variables para paginación
 let lastVisible = null;
@@ -326,8 +334,13 @@ function calcularKpiMensual() {
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
     const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
 
-    const mesSeleccionado = parseInt(document.getElementById("kpiMes").value);
-    const anioSeleccionado = parseInt(document.getElementById("kpiAnio").value);
+    const mesSeleccionado = parseInt(document.getElementById("kpiMes")?.value);
+    const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
+
+    if (!mesSeleccionado || !anioSeleccionado) {
+        console.error("Mes o año no seleccionados correctamente.");
+        return;
+    }
 
     const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
     const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
@@ -372,16 +385,6 @@ function calcularKpiMensual() {
     );
 }
 
-
-        // Manejo de caso sin tickets
-        if (totalTickets === 0) {
-            kpiTotal.textContent = "0";
-            kpiCerrados.textContent = "0";
-            kpiPromedioResolucion.textContent = "N/A";
-            kpiPorcentajeCerrados.textContent = "0%";
-        }
-    });
-}
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf;
@@ -422,6 +425,9 @@ function descargarKpiPdf() {
 
     // Descargar el PDF
     pdf.save("Reporte_KPI_Mensual.pdf");
+if (!mesSeleccionado || !anioSeleccionado) {
+    alert("Por favor seleccione un mes y un año para generar el reporte.");
+    return;
 }
 
 // Exportar funciones globales para acceso desde el HTML
