@@ -393,6 +393,12 @@ function descargarKpiPdf() {
     const mesSeleccionado = document.getElementById("kpiMes").value;
     const anioSeleccionado = document.getElementById("kpiAnio").value;
 
+    // Verificación de mes y año seleccionados
+    if (!mesSeleccionado || !anioSeleccionado) {
+        alert("Por favor seleccione un mes y un año para generar el reporte.");
+        return; // Este return ahora es válido porque está dentro de la función
+    }
+
     const totalTickets = document.getElementById("kpiTotal")?.textContent || "N/A";
     const ticketsCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
     const promedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
@@ -404,8 +410,10 @@ function descargarKpiPdf() {
     pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
     pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
 
+    // Descargar el PDF
     pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
+
 
 
     // Obtener los datos del KPI
@@ -423,12 +431,6 @@ function descargarKpiPdf() {
     pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 50);
     pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 60);
 
-    // Descargar el PDF
-    pdf.save("Reporte_KPI_Mensual.pdf");
-if (!mesSeleccionado || !anioSeleccionado) {
-    alert("Por favor seleccione un mes y un año para generar el reporte.");
-    return;
-}
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
