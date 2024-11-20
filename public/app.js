@@ -68,26 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.signOut();
     });
 
-    document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
-    document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
-    document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
-    document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
+    document.getElementById("kpiMes").addEventListener("change", calcularKpiMensual);
+    document.getElementById("kpiAnio").addEventListener("change", calcularKpiMensual);
 
-    document.getElementById("userFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(false, "next");
-    });
-
-    document.getElementById("adminFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(true, "next");
-    });
-
-   document.getElementById("kpiMes").addEventListener("change", calcularKpiMensual);
-   document.getElementById("kpiAnio").addEventListener("change", calcularKpiMensual);
-
+    document.getElementById("downloadKpiPdf").addEventListener("click", descargarKpiPdf);
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -328,6 +312,75 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 }
 
 // Función para calcular y mostrar el KPI mensual
+// Importar las funciones necesarias desde el SDK de Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
+    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
+    projectId: "mesa-de-ayuda-f5a6a",
+    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
+    messagingSenderId: "912872235241",
+    appId: "1:912872235241:web:2fcf8f473413562c931078",
+    measurementId: "G-0KBEFHH7P9"
+};
+
+// Inicializar Firebase, Firestore y Auth
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Variables para paginación
+let lastVisible = null;
+let firstVisible = null;
+
+// Manejo de la selección de rol
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("adminLogin")?.addEventListener("click", () => {
+        const email = prompt("Ingrese su correo de administrador:");
+        const password = prompt("Ingrese su contraseña:");
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then(() => {
+                document.getElementById("roleSelection").style.display = "none";
+                document.getElementById("adminInterface").style.display = "block";
+                cargarPagina(true, "next");
+                cargarEstadisticas();
+                calcularKpiMensual();
+            })
+            .catch((error) => {
+                console.error("Error de autenticación:", error);
+                alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+            });
+    });
+
+    document.getElementById("userLogin")?.addEventListener("click", () => {
+        document.getElementById("roleSelection").style.display = "none";
+        document.getElementById("userInterface").style.display = "block";
+        cargarPagina(false, "next");
+    });
+
+    document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
+        document.getElementById("userInterface").style.display = "none";
+        document.getElementById("roleSelection").style.display = "block";
+    });
+
+    document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
+        document.getElementById("adminInterface").style.display = "none";
+        document.getElementById("roleSelection").style.display = "block";
+        auth.signOut();
+    });
+
+    document.getElementById("kpiMes").addEventListener("change", calcularKpiMensual);
+    document.getElementById("kpiAnio").addEventListener("change", calcularKpiMensual);
+
+    document.getElementById("downloadKpiPdf").addEventListener("click", descargarKpiPdf);
+});
+
+// Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -393,10 +446,9 @@ function descargarKpiPdf() {
     const mesSeleccionado = document.getElementById("kpiMes").value;
     const anioSeleccionado = document.getElementById("kpiAnio").value;
 
-    // Verificación de mes y año seleccionados
     if (!mesSeleccionado || !anioSeleccionado) {
         alert("Por favor seleccione un mes y un año para generar el reporte.");
-        return; // Este return ahora es válido porque está dentro de la función
+        return;
     }
 
     const totalTickets = document.getElementById("kpiTotal")?.textContent || "N/A";
@@ -410,10 +462,12 @@ function descargarKpiPdf() {
     pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
     pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
 
-    // Descargar el PDF
     pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
 
+    // Descargar el PDF
+    pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
+}
 
 
     // Obtener los datos del KPI
