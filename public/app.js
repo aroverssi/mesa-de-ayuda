@@ -71,36 +71,41 @@ async function cargarPagina(isAdmin, direction = "next") {
 
                 row.innerHTML = isAdmin
                     ? `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.teamviewerId || "N/A"}</td>
-                        <td>${ticket.password || "N/A"}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                        <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        </td>
-                    `
-                    : `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    `;
+                    row.innerHTML = isAdmin
+    ? `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.teamviewerId || "N/A"}</td>
+        <td>${ticket.password || "N/A"}</td>
+        <td>${ticket.estado}</td>
+        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+        <td>
+            <select id="estadoSelect_${doc.id}">
+                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+            </select>
+            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicketSinConsecutivo('${doc.id}')">Eliminar</button>
+        </td>
+    `
+    : `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.estado}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+    `;
+
+               
 
                 ticketTable.appendChild(row);
             });
