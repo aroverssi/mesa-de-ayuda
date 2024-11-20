@@ -175,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-// Función de envío de ticket para usuarios
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault(); // Evitar recarga de la página
 
@@ -183,9 +182,10 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value.trim();
     const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value || "";
-    const password = document.getElementById("password").value || "";
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim() || null;
+    const password = document.getElementById("password").value.trim() || null;
 
+    // Validación de campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
         alert("Por favor complete todos los campos obligatorios.");
         return;
@@ -195,7 +195,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
         // Obtener el número consecutivo
         const consecutivo = await obtenerConsecutivo();
 
-        // Agregar ticket a Firestore
+        // Agregar el ticket a Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
@@ -207,7 +207,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             fechaApertura: new Date(),
             fechaCierre: null,
             consecutivo,
-            comentarios: "" // Campo opcional inicializado vacío
+            comentarios: "" // Inicializar comentarios vacío
         });
 
         alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
@@ -221,17 +221,28 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 // Función para obtener el número consecutivo único
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-        const currentConsecutivo = docSnap.data().consecutivo;
-        await updateDoc(docRef, { consecutivo: increment(1) });
-        return currentConsecutivo + 1;
-    } else {
-        await setDoc(docRef, { consecutivo: 1 });
-        return 1;
+    try {
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const currentConsecutivo = docSnap.data().consecutivo;
+
+            // Incrementar el consecutivo de manera atómica
+            await updateDoc(docRef, { consecutivo: increment(1) });
+
+            return currentConsecutivo + 1;
+        } else {
+            // Si el documento no existe, inicializar el consecutivo
+            await setDoc(docRef, { consecutivo: 1 });
+            return 1;
+        }
+    } catch (error) {
+        console.error("Error al obtener el consecutivo:", error);
+        throw new Error("No se pudo generar el número de ticket.");
     }
 }
+
 
 
         // Cerrar sesión del administrador
