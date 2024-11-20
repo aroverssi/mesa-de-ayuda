@@ -2,6 +2,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -24,6 +26,7 @@ let lastVisible = null;
 let firstVisible = null;
 
 // Función para cargar tickets con filtros y paginación
+
 async function cargarPagina(isAdmin, direction = "next") {
     const ticketTable = isAdmin
         ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
@@ -71,7 +74,7 @@ async function cargarPagina(isAdmin, direction = "next") {
 
                 row.innerHTML = isAdmin
                     ? `
-                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.consecutivo || "Sin número"}</td>
                         <td>${ticket.usuario}</td>
                         <td>${ticket.company}</td>
                         <td>${ticket.email}</td>
@@ -83,17 +86,11 @@ async function cargarPagina(isAdmin, direction = "next") {
                         <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
                         <td>${ticket.comentarios || "Sin comentarios"}</td>
                         <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                            <button class="btn btn-sm btn-danger" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
                         </td>
                     `
                     : `
-                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.consecutivo || "Sin número"}</td>
                         <td>${ticket.usuario}</td>
                         <td>${ticket.company}</td>
                         <td>${ticket.email}</td>
@@ -116,6 +113,8 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+
+
 
 // Manejador de envío de tickets
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
@@ -182,7 +181,21 @@ async function obtenerConsecutivo() {
         throw new Error("No se pudo generar el número del ticket.");
     }
 }
+// Función para eliminar un ticket
+async function eliminarTicket(ticketId) {
+    const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
+    if (!confirmacion) return;
 
+    try {
+        // Eliminar el ticket en Firestore
+        await deleteDoc(doc(db, "tickets", ticketId));
+        alert("Ticket eliminado con éxito.");
+        cargarPagina(true, "next"); // Recargar la tabla después de eliminar
+    } catch (error) {
+        console.error("Error al eliminar el ticket: ", error);
+        alert("Hubo un problema al intentar eliminar el ticket.");
+    }
+}
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
