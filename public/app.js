@@ -318,6 +318,7 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 }
 
 // Función para calcular y mostrar el KPI mensual
+// Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -371,18 +372,18 @@ function calcularKpiMensual() {
             kpiCerrados.textContent = ticketsCerrados;
             kpiPromedioResolucion.textContent = promedioResolucion;
             kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+            // Manejo de caso sin tickets
+            if (totalTickets === 0) {
+                kpiTotal.textContent = "0";
+                kpiCerrados.textContent = "0";
+                kpiPromedioResolucion.textContent = "N/A";
+                kpiPorcentajeCerrados.textContent = "0%";
+            }
         }
     );
 }
-        // Manejo de caso sin tickets
-        if (totalTickets === 0) {
-            kpiTotal.textContent = "0";
-            kpiCerrados.textContent = "0";
-            kpiPromedioResolucion.textContent = "N/A";
-            kpiPorcentajeCerrados.textContent = "0%";
-        }
-    });
-}
+
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
