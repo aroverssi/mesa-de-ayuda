@@ -50,6 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
             cargarEstadisticas();
             calcularKpiMensual();
 
+            // Configurar evento para borrar filtros del administrador
+            document.getElementById("adminFilterClear")?.addEventListener("click", () => {
+                limpiarFiltrosAdmin();
+                cargarPagina(true, "next");
+            });
+
         } catch (error) {
             console.error("Error de autenticación:", error);
             alert("Credenciales incorrectas. Por favor, intente de nuevo.");
@@ -63,6 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Cargar el tablero de tickets
         cargarPagina(false, "next");
+
+        // Configurar evento para borrar filtros del usuario
+        document.getElementById("userFilterClear")?.addEventListener("click", () => {
+            limpiarFiltrosUsuario();
+            cargarPagina(false, "next");
+        });
     });
 
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
@@ -103,6 +115,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Descargar el KPI en PDF
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
+
+// Función para limpiar filtros del administrador
+function limpiarFiltrosAdmin() {
+    document.getElementById("adminFilterStatus").value = "";
+    document.getElementById("adminFilterCompany").value = "";
+    document.getElementById("adminFilterStartDate").value = "";
+    document.getElementById("adminFilterEndDate").value = "";
+    document.getElementById("adminFilterTicket").value = "";
+}
+
+// Función para limpiar filtros del usuario
+function limpiarFiltrosUsuario() {
+    document.getElementById("userFilterStatus").value = "";
+    document.getElementById("userFilterCompany").value = "";
+    document.getElementById("userFilterStartDate").value = "";
+    document.getElementById("userFilterEndDate").value = "";
+    document.getElementById("userFilterTicket").value = "";
+}
+
 
 
 // Función para obtener el número de ticket consecutivo
