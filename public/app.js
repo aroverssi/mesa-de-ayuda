@@ -175,61 +175,64 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-// Manejador para el envío de tickets por el usuario
-document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evitar recargar la página
+// Función de envío de ticket para usuarios
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault(); // Evitar recarga de la página
 
-    // Obtener valores del formulario
     const usuario = document.getElementById("usuario").value.trim();
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value.trim();
     const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value || "";
+    const password = document.getElementById("password").value || "";
 
-    // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+        alert("Por favor complete todos los campos obligatorios.");
         return;
     }
 
     try {
-        // Validar formato del correo electrónico
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert("Por favor, ingrese un correo electrónico válido.");
-            return;
-        }
+        // Obtener el número consecutivo
+        const consecutivo = await obtenerConsecutivo();
 
-        // Crear un ticket en Firestore
+        // Agregar ticket a Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
-            password: password || null,
+            teamviewerId,
+            password,
             estado: "pendiente",
             fechaApertura: new Date(),
+            fechaCierre: null,
+            consecutivo,
+            comentarios: "" // Campo opcional inicializado vacío
         });
 
-        alert("¡Ticket enviado con éxito!");
-        
-        // Restablecer formulario después del envío
-        document.getElementById("ticketForm").reset();
+        alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset(); // Limpiar formulario
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
-
-        // Mostrar un mensaje de error según el tipo de problema
-        if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
-        } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
-        }
+        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
     }
 });
 
-        
+// Función para obtener el número consecutivo único
+async function obtenerConsecutivo() {
+    const docRef = doc(db, "config", "consecutivoTicket");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const currentConsecutivo = docSnap.data().consecutivo;
+        await updateDoc(docRef, { consecutivo: increment(1) });
+        return currentConsecutivo + 1;
+    } else {
+        await setDoc(docRef, { consecutivo: 1 });
+        return 1;
+    }
+}
+
 
         // Cerrar sesión del administrador
         auth.signOut();
