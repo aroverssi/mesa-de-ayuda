@@ -49,13 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
             // Cargar estadísticas y KPI
             cargarEstadisticas();
             calcularKpiMensual();
-
-            // Configurar evento para borrar filtros del administrador
-            document.getElementById("adminFilterClear")?.addEventListener("click", () => {
-                limpiarFiltrosAdmin();
-                cargarPagina(true, "next");
-            });
-
         } catch (error) {
             console.error("Error de autenticación:", error);
             alert("Credenciales incorrectas. Por favor, intente de nuevo.");
@@ -69,12 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Cargar el tablero de tickets
         cargarPagina(false, "next");
-
-        // Configurar evento para borrar filtros del usuario
-        document.getElementById("userFilterClear")?.addEventListener("click", () => {
-            limpiarFiltrosUsuario();
-            cargarPagina(false, "next");
-        });
     });
 
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
@@ -105,6 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarPagina(false, "next");
     });
 
+    // Borrar filtros para el usuario
+    document.getElementById("userFilterClear")?.addEventListener("click", () => {
+        limpiarFiltrosUsuario();
+        cargarPagina(false, "next");
+    });
+
     // Aplicar filtros para el administrador
     document.getElementById("adminFilterApply")?.addEventListener("click", () => {
         lastVisible = null;
@@ -112,9 +105,16 @@ document.addEventListener("DOMContentLoaded", () => {
         cargarPagina(true, "next");
     });
 
+    // Borrar filtros para el administrador
+    document.getElementById("adminFilterClear")?.addEventListener("click", () => {
+        limpiarFiltrosAdmin();
+        cargarPagina(true, "next");
+    });
+
     // Descargar el KPI en PDF
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
+
 
 // Función para limpiar filtros del administrador
 function limpiarFiltrosAdmin() {
@@ -123,8 +123,10 @@ function limpiarFiltrosAdmin() {
     document.getElementById("adminFilterStartDate").value = "";
     document.getElementById("adminFilterEndDate").value = "";
     document.getElementById("adminFilterTicket").value = "";
+    lastVisible = null;
+    firstVisible = null;
+    cargarPagina(true, "next"); // Recarga sin filtros
 }
-
 // Función para limpiar filtros del usuario
 function limpiarFiltrosUsuario() {
     document.getElementById("userFilterStatus").value = "";
@@ -132,9 +134,10 @@ function limpiarFiltrosUsuario() {
     document.getElementById("userFilterStartDate").value = "";
     document.getElementById("userFilterEndDate").value = "";
     document.getElementById("userFilterTicket").value = "";
+    lastVisible = null;
+    firstVisible = null;
+    cargarPagina(false, "next"); // Recarga sin filtros
 }
-
-
 
 // Función para obtener el número de ticket consecutivo
 async function obtenerConsecutivo() {
@@ -377,7 +380,6 @@ function activarActualizacionEnTiempoReal(isAdmin) {
     });
 }
 
-// Función para calcular y mostrar el KPI mensual
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
