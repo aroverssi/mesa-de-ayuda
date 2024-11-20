@@ -45,186 +45,75 @@ async function cargarPagina(isAdmin, direction = "next") {
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
     if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
-// Orden cronológico por defecto
-consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-try {
-    if (direction === "next" && lastVisible) {
-        consulta = query(consulta, startAfter(lastVisible), limit(10));
-    } else if (direction === "prev" && firstVisible) {
-        consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-    } else {
-        consulta = query(consulta, limit(10));
-    }
 
-    const snapshot = await getDocs(consulta);
+    // Orden cronológico por defecto
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
-    if (!snapshot.empty) {
-        lastVisible = snapshot.docs[snapshot.docs.length - 1];
-        firstVisible = snapshot.docs[0];
-
-        ticketTable.innerHTML = ""; // Limpiar la tabla antes de llenarla
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.teamviewerId || "N/A"}</td>
-                    <td>${ticket.password || "N/A"}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                    <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    <td>
-                        <select id="estadoSelect_${doc.id}">
-                            <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                            <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                            <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                        </select>
-                        <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                        <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicketSinConsecutivo('${doc.id}')">Eliminar</button>
-                    </td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                    <td>${ticket.comentarios || "Sin comentarios"}</td>
-                `;
-
-            ticketTable.appendChild(row); // Añadir la fila a la tabla
-        });
-
-        document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-        document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
-    } else {
-        ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
-        lastVisible = null;
-        firstVisible = null;
-    }
-} catch (error) {
-    console.error("Error al cargar la página:", error);
-}
-
-
-
-// Función para eliminar tickets sin consecutivo
-async function eliminarTicketSinConsecutivo(ticketId) {
     try {
-        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket sin consecutivo?");
-        if (!confirmacion) return;
-
-        // Obtener el ticket desde la base de datos
-        const ticketRef = doc(db, "tickets", ticketId);
-        const ticketSnap = await getDoc(ticketRef);
-
-        if (!ticketSnap.exists()) {
-            alert("El ticket no existe en la base de datos.");
-            return;
-        }
-
-        const ticketData = ticketSnap.data();
-
-        // Verificar si tiene un consecutivo
-        if (!ticketData.consecutivo) {
-            await deleteDoc(ticketRef);
-            alert("Ticket eliminado con éxito.");
-            cargarPagina(true, "next"); // Recargar la tabla
+        if (direction === "next" && lastVisible) {
+            consulta = query(consulta, startAfter(lastVisible), limit(10));
+        } else if (direction === "prev" && firstVisible) {
+            consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
         } else {
-            alert("No se puede eliminar este ticket porque tiene un consecutivo.");
+            consulta = query(consulta, limit(10));
         }
-    } catch (error) {
-        console.error("Error al eliminar el ticket:", error);
-        alert("Ocurrió un problema al intentar eliminar el ticket.");
-    }
-}
 
+        const snapshot = await getDocs(consulta);
 
-// Manejador de envío de tickets
-document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault(); // Evitar recarga de página
+        if (!snapshot.empty) {
+            lastVisible = snapshot.docs[snapshot.docs.length - 1];
+            firstVisible = snapshot.docs[0];
 
-    const submitButton = document.querySelector('#submitButton'); // ID del botón de envío
-    submitButton.disabled = true; // Deshabilitar el botón temporalmente
+            ticketTable.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const ticket = doc.data();
+                const row = document.createElement("tr");
 
-    const usuario = document.getElementById("usuario").value.trim();
-    const company = document.getElementById("company").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value || null;
-    const password = document.getElementById("password").value || null;
+                row.innerHTML = isAdmin
+                    ? `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.teamviewerId || "N/A"}</td>
+                        <td>${ticket.password || "N/A"}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                        <td>
+                            <select id="estadoSelect_${doc.id}">
+                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                            </select>
+                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                        </td>
+                    `
+                    : `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    `;
 
-    if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor complete todos los campos obligatorios.");
-        submitButton.disabled = false; // Habilitar el botón si hay error
-        return;
-    }
+                ticketTable.appendChild(row);
+            });
 
-    try {
-        const consecutivo = await obtenerConsecutivo();
-        await addDoc(collection(db, "tickets"), {
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId,
-            password,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-            consecutivo,
-            comentarios: ""
-        });
-        alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket:", error);
-        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
-    } finally {
-        submitButton.disabled = false; // Habilitar el botón después del proceso
-    }
-});
-
-
-// Obtener número de consecutivo para tickets
-async function obtenerConsecutivo() {
-    // Referencia al documento en Firestore donde se almacena el consecutivo
-    const docRef = doc(db, "config", "consecutivoTicket");
-
-    try {
-        // Intentar obtener el documento
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            // Si el documento existe, obtener el consecutivo actual
-            const currentConsecutivo = docSnap.data().consecutivo;
-
-            // Incrementar el consecutivo de manera atómica
-            await updateDoc(docRef, { consecutivo: increment(1) });
-
-            // Retornar el siguiente consecutivo
-            return currentConsecutivo + 1;
+            document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
+            document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
         } else {
-            // Si el documento no existe, inicializar el consecutivo
-            await setDoc(docRef, { consecutivo: 1 });
-
-            // Retornar 1 como el primer consecutivo
-            return 1;
+            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
+            lastVisible = null;
+            firstVisible = null;
         }
     } catch (error) {
-        // Registrar el error en la consola
-        console.error("Error al obtener el consecutivo:", error);
-
-        // Lanzar una excepción personalizada para que sea manejada externamente
-        throw new Error("No se pudo generar el número del ticket.");
+        console.error("Error al cargar la página:", error);
     }
 }
 
@@ -284,41 +173,64 @@ document.addEventListener("DOMContentLoaded", () => {
         // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
+        
+// Manejador para el envío de tickets por el usuario
+// Manejador para el envío de tickets por el usuario
+document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Evitar recargar la página
 
-        document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault(); // Evitar recarga de la página
-
-    const usuario = document.getElementById("usuario").value;
+    // Obtener valores del formulario
+    const usuario = document.getElementById("usuario").value.trim();
     const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value;
-    const descripcion = document.getElementById("descripcion").value;
-    const teamviewerId = document.getElementById("teamviewer_id").value || "";
-    const password = document.getElementById("password").value || "";
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    const consecutivo = await obtenerConsecutivo();
+    // Validar campos obligatorios
+    if (!usuario || !company || !email || !descripcion) {
+        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+        return;
+    }
 
     try {
+        // Validar formato del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Por favor, ingrese un correo electrónico válido.");
+            return;
+        }
+
+        // Crear un ticket en Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId,
-            password,
+            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
-            fechaCierre: null,
-            consecutivo,
-            comentarios: "" // Campo opcional inicializado vacío
         });
-        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
-        document.getElementById("ticketForm").reset(); // Limpiar formulario
+
+        alert("¡Ticket enviado con éxito!");
+        
+        // Restablecer formulario después del envío
+        document.getElementById("ticketForm").reset();
     } catch (error) {
-        console.error("Error al enviar el ticket: ", error);
-        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
+        console.error("Error al enviar el ticket:", error);
+
+        // Mostrar un mensaje de error según el tipo de problema
+        if (error.code === "permission-denied") {
+            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+        } else {
+            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+        }
     }
 });
-       
+
+        
+
         // Cerrar sesión del administrador
         auth.signOut();
     });
@@ -585,7 +497,13 @@ function descargarKpiPdf() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
-window.eliminarTicketSinConsecutivo = eliminarTicketSinConsecutivo;
+
+
+
+
+
+
+
 
 
 
