@@ -175,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
 
         // Manejador para el envío de tickets por el usuario
+// Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault(); // Evitar recarga de la página
 
@@ -182,8 +183,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     const company = document.getElementById("company").value;
     const email = document.getElementById("email").value.trim();
     const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value || null;
-    const password = document.getElementById("password").value || null;
+    const teamviewerId = document.getElementById("teamviewer_id").value || ""; // Default: cadena vacía
+    const password = document.getElementById("password").value || ""; // Default: cadena vacía
 
     // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
@@ -221,7 +222,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
 // Función para obtener el número consecutivo único
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
-
     try {
         const docSnap = await getDoc(docRef);
 
@@ -242,8 +242,6 @@ async function obtenerConsecutivo() {
         throw new Error("No se pudo generar el número de ticket.");
     }
 }
-
-        
 
         // Cerrar sesión del administrador
         auth.signOut();
