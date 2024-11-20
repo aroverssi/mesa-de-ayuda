@@ -130,65 +130,64 @@
         </div>
 
         <!-- Interfaz de Administrador -->
-        <div id="adminInterface" style="display: none;">
-            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-            <td>
-      <!-- Botón para eliminar tickets -->
-    <button class="btn btn-sm btn-danger" onclick="eliminarTicketSinConsecutivo('${doc.id}')">Eliminar</button>
-</td>
+<div id="adminInterface" style="display: none;">
+    <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
 
+    <!-- Filtros para Administrador -->
+    <div class="form-inline mb-3">
+        <select id="adminFilterStatus" class="form-control mr-2">
+            <option value="">Todos los Estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en proceso">En Proceso</option>
+            <option value="cerrado">Cerrado</option>
+        </select>
+        <select id="adminFilterCompany" class="form-control mr-2">
+            <option value="">Todas las Compañías</option>
+            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+            <option value="Allpack">Allpack</option>
+            <option value="Business On Line">Business On Line</option>
+            <option value="Zona Franca">Zona Franca</option>
+            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+        </select>
+        <input type="date" id="adminFilterStartDate" class="form-control mr-2">
+        <input type="date" id="adminFilterEndDate" class="form-control mr-2">
+        <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
+        <button id="adminFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
+        <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+    </div>
 
-            <!-- Filtros para Administrador -->
-            <div class="form-inline mb-3">
-                <select id="adminFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="adminFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
-                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
-                <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
-                <button id="adminFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
-                <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
-            </div>
+    <!-- Botones de Paginación para Administrador -->
+    <div class="d-flex justify-content-between mb-3">
+        <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
+        <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
+    </div>
 
-            <!-- Botones de Paginación para Administrador -->
-            <div class="d-flex justify-content-between mb-3">
-                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
-                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
-            </div>
+    <!-- Tablero de Tickets para Administrador -->
+    <h2 class="text-center mb-4">Tablero de Tickets</h2>
+    <table class="table table-bordered" id="ticketTableAdmin">
+        <thead>
+            <tr>
+                <th>Número de Ticket</th>
+                <th>Usuario</th>
+                <th>Compañía</th>
+                <th>Correo Electrónico</th>
+                <th>Descripción</th>
+                <th>ID TeamViewer</th>
+                <th>Contraseña TW</th>
+                <th>Estado</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Resolución</th>
+                <th>Comentarios</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Las filas dinámicas se generarán desde app.js -->
+        </tbody>
+    </table>
+</div>
 
-            <!-- Tablero de Tickets para Administrador -->
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableAdmin">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Compañía</th>
-                        <th>Correo Electrónico</th>
-                        <th>Descripción</th>
-                        <th>ID TeamViewer</th>
-                        <th>Contraseña TW</th>
-                        <th>Estado</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Resolución</th>
-                        <th>Comentarios</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
 
             <!-- Estadísticas -->
             <h3 class="mt-5">Estadísticas del Administrador</h3>
