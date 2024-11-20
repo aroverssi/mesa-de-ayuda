@@ -18,14 +18,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const mesSelect = document.getElementById("kpiMes");
-const anioSelect = document.getElementById("kpiAnio");
-
-if (mesSelect && anioSelect) {
-    mesSelect.addEventListener("change", calcularKpiMensual);
-    anioSelect.addEventListener("change", calcularKpiMensual);
-}
-
 
 // Variables para paginación
 let lastVisible = null;
@@ -68,10 +60,24 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.signOut();
     });
 
-    document.getElementById("kpiMes").addEventListener("change", calcularKpiMensual);
-    document.getElementById("kpiAnio").addEventListener("change", calcularKpiMensual);
+    document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
+    document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
+    document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
+    document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
 
-    document.getElementById("downloadKpiPdf").addEventListener("click", descargarKpiPdf);
+    document.getElementById("userFilterApply")?.addEventListener("click", () => {
+        lastVisible = null;
+        firstVisible = null;
+        cargarPagina(false, "next");
+    });
+
+    document.getElementById("adminFilterApply")?.addEventListener("click", () => {
+        lastVisible = null;
+        firstVisible = null;
+        cargarPagina(true, "next");
+    });
+
+    document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
 
 // Función para obtener el número de ticket consecutivo
@@ -311,7 +317,6 @@ function activarActualizacionEnTiempoReal(isAdmin) {
     });
 }
 
-
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
@@ -319,88 +324,52 @@ function calcularKpiMensual() {
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
     const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
 
-    const mesSeleccionado = parseInt(document.getElementById("kpiMes")?.value);
-    const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
-
-    if (!mesSeleccionado || !anioSeleccionado) {
-        console.error("Mes o año no seleccionados correctamente.");
-        return;
-    }
-
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
-
     let totalTickets = 0;
     let ticketsCerrados = 0;
     let sumaResolucion = 0;
 
-    onSnapshot(
-        query(
-            collection(db, "tickets"),
-            where("fechaApertura", ">=", inicioMes),
-            where("fechaApertura", "<=", finMes)
-        ),
-        (snapshot) => {
-            totalTickets = snapshot.size;
-            ticketsCerrados = 0;
-            sumaResolucion = 0;
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
 
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-                    ticketsCerrados++;
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                }
-            });
+    onSnapshot(query(collection(db, "tickets"), where("fechaApertura", ">=", inicioMes)), (snapshot) => {
+        totalTickets = snapshot.size;
+        ticketsCerrados = 0;
+        sumaResolucion = 0;
 
-            const promedioResolucion = ticketsCerrados
-                ? (sumaResolucion / ticketsCerrados).toFixed(2)
-                : "N/A";
-            const porcentajeCerrados = totalTickets
-                ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-                : "0";
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+                ticketsCerrados++;
+                const tiempoResolucion = 
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+                sumaResolucion += tiempoResolucion;
+            }
+        });
 
-            kpiTotal.textContent = totalTickets;
-            kpiCerrados.textContent = ticketsCerrados;
-            kpiPromedioResolucion.textContent = promedioResolucion;
-            kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+        const promedioResolucion = ticketsCerrados ? (sumaResolucion / ticketsCerrados).toFixed(2) : "N/A";
+        const porcentajeCerrados = totalTickets
+            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+            : "0";
+
+        kpiTotal.textContent = totalTickets;
+        kpiCerrados.textContent = ticketsCerrados;
+        kpiPromedioResolucion.textContent = promedioResolucion;
+        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+        // Manejo de caso sin tickets
+        if (totalTickets === 0) {
+            kpiTotal.textContent = "0";
+            kpiCerrados.textContent = "0";
+            kpiPromedioResolucion.textContent = "N/A";
+            kpiPorcentajeCerrados.textContent = "0%";
         }
-    );
+    });
 }
-
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
-
-    const mesSeleccionado = document.getElementById("kpiMes").value;
-    const anioSeleccionado = document.getElementById("kpiAnio").value;
-
-    if (!mesSeleccionado || !anioSeleccionado) {
-        alert("Por favor seleccione un mes y un año para generar el reporte.");
-        return;
-    }
-
-    const totalTickets = document.getElementById("kpiTotal")?.textContent || "N/A";
-    const ticketsCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
-    const promedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
-    const porcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
-
-    pdf.text(`Reporte KPI - ${mesSeleccionado}/${anioSeleccionado}`, 10, 10);
-    pdf.text(`Total de Tickets: ${totalTickets}`, 10, 20);
-    pdf.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 30);
-    pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 40);
-    pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 50);
-
-    pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
-}
-
-    // Descargar el PDF
-    pdf.save(`KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
-}
-
 
     // Obtener los datos del KPI
     const kpiTotal = document.getElementById("kpiTotal").textContent;
@@ -417,11 +386,17 @@ function descargarKpiPdf() {
     pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 50);
     pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 60);
 
+    // Descargar el PDF
+    pdf.save("Reporte_KPI_Mensual.pdf");
+}
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
+
+
+
 
 
 
