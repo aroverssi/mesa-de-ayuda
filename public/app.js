@@ -47,7 +47,6 @@ async function cargarPagina(isAdmin, direction = "next") {
     if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
 // Orden cronológico por defecto
 consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-
 try {
     if (direction === "next" && lastVisible) {
         consulta = query(consulta, startAfter(lastVisible), limit(10));
@@ -111,9 +110,12 @@ try {
         ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
         lastVisible = null;
         firstVisible = null;
+    }
 } catch (error) {
     console.error("Error al cargar la página:", error);
-} // Aquí faltaba cerrar el bloque try-catch.
+}
+
+
 
 // Función para eliminar tickets sin consecutivo
 async function eliminarTicketSinConsecutivo(ticketId) {
@@ -316,32 +318,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
     }
 });
-
-async function obtenerConsecutivo() {
-    const docRef = doc(db, "config", "consecutivoTicket");
-
-    try {
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const currentConsecutivo = docSnap.data().consecutivo;
-
-            // Incrementar el consecutivo de manera atómica
-            await updateDoc(docRef, { consecutivo: increment(1) });
-
-            return currentConsecutivo + 1;
-        } else {
-            // Si el documento no existe, inicializar el consecutivo
-            await setDoc(docRef, { consecutivo: 1 });
-            return 1;
-        }
-    } catch (error) {
-        console.error("Error al obtener el consecutivo:", error);
-        throw new Error("No se pudo generar el número de ticket.");
-    }
-}
-
-
        
         // Cerrar sesión del administrador
         auth.signOut();
