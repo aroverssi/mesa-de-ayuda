@@ -174,29 +174,19 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
 
-        // Manejador para el envío de tickets por el usuario
-// Manejador para el envío de tickets por el usuario
-document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+        document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault(); // Evitar recarga de la página
 
-    const usuario = document.getElementById("usuario").value.trim();
+    const usuario = document.getElementById("usuario").value;
     const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value || ""; // Default: cadena vacía
-    const password = document.getElementById("password").value || ""; // Default: cadena vacía
+    const email = document.getElementById("email").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const teamviewerId = document.getElementById("teamviewer_id").value || "";
+    const password = document.getElementById("password").value || "";
 
-    // Validar campos obligatorios
-    if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor complete todos los campos obligatorios.");
-        return;
-    }
+    const consecutivo = await obtenerConsecutivo();
 
     try {
-        // Obtener el número consecutivo
-        const consecutivo = await obtenerConsecutivo();
-
-        // Agregar ticket a Firestore
         await addDoc(collection(db, "tickets"), {
             usuario,
             company,
@@ -210,18 +200,17 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
             consecutivo,
             comentarios: "" // Campo opcional inicializado vacío
         });
-
-        alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
+        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
         document.getElementById("ticketForm").reset(); // Limpiar formulario
     } catch (error) {
-        console.error("Error al enviar el ticket:", error);
+        console.error("Error al enviar el ticket: ", error);
         alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
     }
 });
 
-// Función para obtener el número consecutivo único
 async function obtenerConsecutivo() {
     const docRef = doc(db, "config", "consecutivoTicket");
+
     try {
         const docSnap = await getDoc(docRef);
 
@@ -243,6 +232,8 @@ async function obtenerConsecutivo() {
     }
 }
 
+
+       
         // Cerrar sesión del administrador
         auth.signOut();
     });
