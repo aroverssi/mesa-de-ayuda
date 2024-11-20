@@ -132,6 +132,11 @@
         <!-- Interfaz de Administrador -->
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            <td>
+      <!-- Botón para eliminar tickets -->
+    <button class="btn btn-sm btn-danger" onclick="eliminarTicketSinConsecutivo('${doc.id}')">Eliminar</button>
+</td>
+
 
             <!-- Filtros para Administrador -->
             <div class="form-inline mb-3">
