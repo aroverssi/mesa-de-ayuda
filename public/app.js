@@ -176,7 +176,8 @@ async function cargarPagina(isAdmin, direction = "next") {
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
     if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("consecutivo", "asc"));
+    // Orden cronológico por defecto
+    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
     try {
         if (direction === "next" && lastVisible) {
@@ -245,6 +246,7 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+
 
 // Función para actualizar ticket
 async function actualizarTicket(ticketId) {
