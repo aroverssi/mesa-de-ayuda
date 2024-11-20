@@ -37,10 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
 
-            // Cargar el tablero de tickets
+            // Restablecer variables globales y cargar el tablero
+            lastVisible = null;
+            firstVisible = null;
             await cargarPagina(true, "next");
 
-            // Establecer valores predeterminados para los filtros de KPI
+            // Configuración predeterminada de los filtros de KPI
             const defaultMes = new Date().getMonth() + 1; // Mes actual
             const defaultAnio = new Date().getFullYear(); // Año actual
             document.getElementById("kpiMes").value = defaultMes;
@@ -60,7 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
 
-        // Cargar el tablero de tickets
+        // Restablecer variables globales y cargar el tablero
+        lastVisible = null;
+        firstVisible = null;
         cargarPagina(false, "next");
     });
 
@@ -79,42 +83,37 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.signOut();
     });
 
-    // Configuración de eventos de paginación
+    // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
     document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
     document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
     document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
 
-    // Aplicar filtros para el usuario
+    // Aplicar filtros para usuario y administrador
     document.getElementById("userFilterApply")?.addEventListener("click", () => {
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
-    // Borrar filtros para el usuario
-    document.getElementById("userFilterClear")?.addEventListener("click", () => {
-        limpiarFiltrosUsuario();
-        cargarPagina(false, "next");
-    });
-
-    // Aplicar filtros para el administrador
     document.getElementById("adminFilterApply")?.addEventListener("click", () => {
         lastVisible = null;
         firstVisible = null;
         cargarPagina(true, "next");
     });
 
-    // Borrar filtros para el administrador
+    // Borrar filtros para usuario y administrador
+    document.getElementById("userFilterClear")?.addEventListener("click", () => {
+        limpiarFiltrosUsuario();
+    });
+
     document.getElementById("adminFilterClear")?.addEventListener("click", () => {
         limpiarFiltrosAdmin();
-        cargarPagina(true, "next");
     });
 
     // Descargar el KPI en PDF
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
-
 
 // Función para limpiar filtros del administrador
 function limpiarFiltrosAdmin() {
@@ -125,8 +124,9 @@ function limpiarFiltrosAdmin() {
     document.getElementById("adminFilterTicket").value = "";
     lastVisible = null;
     firstVisible = null;
-    cargarPagina(true, "next"); // Recarga sin filtros
+    cargarPagina(true, "next"); // Recargar sin filtros
 }
+
 // Función para limpiar filtros del usuario
 function limpiarFiltrosUsuario() {
     document.getElementById("userFilterStatus").value = "";
@@ -136,149 +136,7 @@ function limpiarFiltrosUsuario() {
     document.getElementById("userFilterTicket").value = "";
     lastVisible = null;
     firstVisible = null;
-    cargarPagina(false, "next"); // Recarga sin filtros
-}
-
-// Función para obtener el número de ticket consecutivo
-async function obtenerConsecutivo() {
-    const docRef = doc(db, "config", "consecutivoTicket");
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const currentConsecutivo = docSnap.data().consecutivo;
-        await updateDoc(docRef, { consecutivo: increment(1) });
-        return currentConsecutivo + 1;
-    } else {
-        await setDoc(docRef, { consecutivo: 1 });
-        return 1;
-    }
-}
-
-// Función de envío de ticket
-document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const usuario = document.getElementById("usuario").value;
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value;
-    const descripcion = document.getElementById("descripcion").value;
-    const teamviewerId = document.getElementById("teamviewer_id").value || "";
-    const password = document.getElementById("password").value || "";
-
-    const consecutivo = await obtenerConsecutivo();
-
-    try {
-        await addDoc(collection(db, "tickets"), {
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId,
-            password,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-            fechaCierre: null,
-            consecutivo,
-            comentarios: ""
-        });
-        alert(`Ticket enviado con éxito. Su número de ticket es: ${consecutivo}`);
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket: ", error);
-    }
-});
-
-// Función para cargar tickets con filtros y paginación
-async function cargarPagina(isAdmin, direction = "next") {
-    const ticketTable = isAdmin
-        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
-        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
-
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
-    const ticketFiltro = document.getElementById(isAdmin ? "adminFilterTicket" : "userFilterTicket")?.value || "";
-
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-    if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
-
-    // Orden cronológico por defecto
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-
-    try {
-        if (direction === "next" && lastVisible) {
-            consulta = query(consulta, startAfter(lastVisible), limit(10));
-        } else if (direction === "prev" && firstVisible) {
-            consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-        } else {
-            consulta = query(consulta, limit(10));
-        }
-
-        const snapshot = await getDocs(consulta);
-
-        if (!snapshot.empty) {
-            lastVisible = snapshot.docs[snapshot.docs.length - 1];
-            firstVisible = snapshot.docs[0];
-
-            ticketTable.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                const row = document.createElement("tr");
-
-                row.innerHTML = isAdmin
-                    ? `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.teamviewerId}</td>
-                        <td>${ticket.password}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                        <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        </td>
-                    `
-                    : `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    `;
-
-                ticketTable.appendChild(row);
-            });
-
-            document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-            document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
-        } else {
-            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
-            lastVisible = null;
-            firstVisible = null;
-        }
-    } catch (error) {
-        console.error("Error al cargar la página:", error);
-    }
+    cargarPagina(false, "next"); // Recargar sin filtros
 }
 
 
