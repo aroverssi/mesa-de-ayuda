@@ -165,6 +165,7 @@ async function cargarPagina(isAdmin, direction = "next") {
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
     const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
+    const ticketFiltro = document.getElementById(isAdmin ? "adminFilterTicket" : "userFilterTicket")?.value || "";
 
     let consulta = collection(db, "tickets");
     const filtros = [];
@@ -173,8 +174,9 @@ async function cargarPagina(isAdmin, direction = "next") {
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
+    if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
 
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
+    consulta = query(consulta, ...filtros, orderBy("consecutivo", "asc"));
 
     try {
         if (direction === "next" && lastVisible) {
