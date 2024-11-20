@@ -173,6 +173,47 @@ document.addEventListener("DOMContentLoaded", () => {
         // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
+        
+// Manejador para el envío de tickets por el usuario
+document.getElementById("ticketForm").addEventListener("submit", async (event) => {
+    event.preventDefault(); // Evitar recargar la página
+
+    // Obtener valores del formulario
+    const usuario = document.getElementById("usuario").value.trim();
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!usuario || !company || !email || !descripcion) {
+        alert("Por favor complete todos los campos obligatorios.");
+        return;
+    }
+
+    try {
+        // Agregar ticket a Firestore
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId: teamviewerId || null,
+            password: password || null,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+        });
+
+        alert("¡Ticket enviado con éxito!");
+        // Opcional: resetear formulario
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket:", error);
+        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
+    }
+});
+
+        
 
         // Cerrar sesión del administrador
         auth.signOut();
