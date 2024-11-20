@@ -1,5 +1,4 @@
 // Importar las funciones necesarias desde el SDK de Firebase
-// Importar las funciones necesarias desde el SDK de Firebase
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
