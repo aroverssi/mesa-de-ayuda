@@ -81,26 +81,27 @@
 
             <!-- Filtros para Usuario -->
             <div class="form-inline mb-3">
-                <select id="userFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="userFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="userFilterStartDate" class="form-control mr-2">
-                <input type="date" id="userFilterEndDate" class="form-control mr-2">
-                <input type="number" id="userFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
-                <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+    <select id="userFilterStatus" class="form-control mr-2">
+        <option value="">Todos los Estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en proceso">En Proceso</option>
+        <option value="cerrado">Cerrado</option>
+    </select>
+    <select id="userFilterCompany" class="form-control mr-2">
+        <option value="">Todas las Compañías</option>
+        <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+        <option value="Allpack">Allpack</option>
+        <option value="Business On Line">Business On Line</option>
+        <option value="Zona Franca">Zona Franca</option>
+        <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+        <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+    </select>
+    <input type="date" id="userFilterStartDate" class="form-control mr-2">
+    <input type="date" id="userFilterEndDate" class="form-control mr-2">
+    <input type="number" id="userFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
+    <button id="userFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
+    <button id="userFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+</div>
 
             <!-- Botones de Paginación para Usuario -->
             <div class="d-flex justify-content-between mb-3">
@@ -131,27 +132,29 @@
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
             <!-- Filtros para Administrador -->
-            <div class="form-inline mb-3">
-                <select id="adminFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="adminFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                </select>
-                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
-                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
-                <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
-                <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
-            </div>
+         <div class="form-inline mb-3">
+    <select id="adminFilterStatus" class="form-control mr-2">
+        <option value="">Todos los Estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en proceso">En Proceso</option>
+        <option value="cerrado">Cerrado</option>
+    </select>
+    <select id="adminFilterCompany" class="form-control mr-2">
+        <option value="">Todas las Compañías</option>
+        <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+        <option value="Allpack">Allpack</option>
+        <option value="Business On Line">Business On Line</option>
+        <option value="Zona Franca">Zona Franca</option>
+        <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+        <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+    </select>
+    <input type="date" id="adminFilterStartDate" class="form-control mr-2">
+    <input type="date" id="adminFilterEndDate" class="form-control mr-2">
+    <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
+    <button id="adminFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
+    <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+</div>
+
 
             <!-- Botones de Paginación para Administrador -->
             <div class="d-flex justify-content-between mb-3">
