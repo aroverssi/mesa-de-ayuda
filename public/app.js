@@ -117,6 +117,65 @@ async function cargarPagina(isAdmin, direction = "next") {
     }
 }
 
+// Manejador de envío de tickets
+document.getElementById("ticketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault(); // Evitar recarga de página
+
+    const usuario = document.getElementById("usuario").value.trim();
+    const company = document.getElementById("company").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value || null;
+    const password = document.getElementById("password").value || null;
+
+    if (!usuario || !company || !email || !descripcion) {
+        alert("Por favor complete todos los campos obligatorios.");
+        return;
+    }
+
+    try {
+        const consecutivo = await obtenerConsecutivo();
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId,
+            password,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+            consecutivo,
+            comentarios: ""
+        });
+        alert(`¡Ticket enviado con éxito! Su número de ticket es: ${consecutivo}`);
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket:", error);
+        alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo.");
+    }
+});
+
+// Obtener número de consecutivo para tickets
+async function obtenerConsecutivo() {
+    const docRef = doc(db, "config", "consecutivoTicket");
+
+    try {
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const currentConsecutivo = docSnap.data().consecutivo;
+            await updateDoc(docRef, { consecutivo: increment(1) });
+            return currentConsecutivo + 1;
+        } else {
+            await setDoc(docRef, { consecutivo: 1 });
+            return 1;
+        }
+    } catch (error) {
+        console.error("Error al obtener el consecutivo:", error);
+        throw new Error("No se pudo generar el número del ticket.");
+    }
+}
+
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
