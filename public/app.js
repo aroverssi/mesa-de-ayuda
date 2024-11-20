@@ -69,38 +69,42 @@ async function cargarPagina(isAdmin, direction = "next") {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-                row.innerHTML = isAdmin
-                    ? `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.teamviewerId || "N/A"}</td>
-                        <td>${ticket.password || "N/A"}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                        <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        </td>
-                    `
-                    : `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    `;
+               row.innerHTML = isAdmin
+    ? `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.teamviewerId || "N/A"}</td>
+        <td>${ticket.password || "N/A"}</td>
+        <td>${ticket.estado}</td>
+        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+        <td>
+            <select id="estadoSelect_${doc.id}">
+                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+            </select>
+            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+        </td>
+        <td>
+            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
+        </td>
+    `
+    : `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.estado}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+    `;
+
 
                 ticketTable.appendChild(row);
             });
@@ -310,6 +314,23 @@ async function actualizarTicket(ticketId) {
         console.error("Error al actualizar el ticket: ", error);
     }
 }
+// función eliminarTicket
+async function eliminarTicket(ticketId) {
+    try {
+        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
+        if (!confirmacion) return;
+
+        // Eliminar el documento del ticket en la base de datos
+        await deleteDoc(doc(db, "tickets", ticketId));
+
+        alert("Ticket eliminado con éxito.");
+        cargarPagina(true, "next"); // Recargar la tabla
+    } catch (error) {
+        console.error("Error al eliminar el ticket: ", error);
+        alert("Hubo un problema al intentar eliminar el ticket.");
+    }
+}
+
 
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
@@ -497,6 +518,8 @@ function descargarKpiPdf() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
+window.eliminarTicket = eliminarTicket;
+
 
 
 
