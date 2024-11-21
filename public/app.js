@@ -148,7 +148,28 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+async function obtenerConsecutivo() {
+    const consecutivoRef = doc(db, "config", "consecutivoTicket");
+    try {
+        const docSnap = await getDoc(consecutivoRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const nuevoConsecutivo = data.consecutivo + 1;
 
+            // Incrementar el valor del consecutivo en Firestore
+            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
+
+            return nuevoConsecutivo;
+        } else {
+            // Si no existe, inicializar el consecutivo en Firestore
+            await setDoc(consecutivoRef, { consecutivo: 1 });
+            return 1;
+        }
+    } catch (error) {
+        console.error("Error al obtener el consecutivo:", error);
+        throw error;
+    }
+}
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
@@ -207,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-// Manejador para el envío de tickets por el usuario
+
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
@@ -233,8 +254,12 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             return;
         }
 
+        // Obtener el consecutivo del ticket
+        const consecutivo = await obtenerConsecutivo();
+
         // Crear un ticket en Firestore
         await addDoc(collection(db, "tickets"), {
+            consecutivo, // Añadir el consecutivo al ticket
             usuario,
             company,
             email,
@@ -245,7 +270,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             fechaApertura: new Date(),
         });
 
-        alert("¡Ticket enviado con éxito!");
+        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
         
         // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
@@ -261,7 +286,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     }
 });
 
-        
+
 
         // Cerrar sesión del administrador
         auth.signOut();
