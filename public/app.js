@@ -57,27 +57,32 @@ async function cargarPagina(isAdmin, direction = "next") {
         ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
         : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
+    // Mostrar un mensaje de carga
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
 
+    // Obtener los filtros
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
     const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
     const ticketFiltro = document.getElementById(isAdmin ? "adminFilterTicket" : "userFilterTicket")?.value || "";
 
+    // Iniciar la consulta base
     let consulta = collection(db, "tickets");
     const filtros = [];
 
+    // Aplicar los filtros opcionales
     if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
     if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
 
-    // Orden cronológico por defecto
+    // Agregar ordenamiento por fecha de apertura
     consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
     try {
+        // Paginación
         if (direction === "next" && lastVisible) {
             consulta = query(consulta, startAfter(lastVisible), limit(10));
         } else if (direction === "prev" && firstVisible) {
@@ -86,60 +91,64 @@ async function cargarPagina(isAdmin, direction = "next") {
             consulta = query(consulta, limit(10));
         }
 
+        // Obtener los datos de Firestore
         const snapshot = await getDocs(consulta);
 
         if (!snapshot.empty) {
             lastVisible = snapshot.docs[snapshot.docs.length - 1];
             firstVisible = snapshot.docs[0];
 
+            // Limpiar la tabla y llenar con los nuevos datos
             ticketTable.innerHTML = "";
             snapshot.forEach((doc) => {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-               row.innerHTML = isAdmin
-    ? `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.teamviewerId || "N/A"}</td>
-        <td>${ticket.password || "N/A"}</td>
-        <td>${ticket.estado}</td>
-        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-        <td>
-            <select id="estadoSelect_${doc.id}">
-                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-            </select>
-            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
-        </td>
-    `
-    : `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.estado}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-    `;
-
+                // Estructura de la fila según el rol
+                row.innerHTML = isAdmin
+                    ? `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.teamviewerId || "N/A"}</td>
+                        <td>${ticket.password || "N/A"}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                        <td>
+                            <select id="estadoSelect_${doc.id}">
+                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                            </select>
+                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
+                        </td>
+                    `
+                    : `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    `;
 
                 ticketTable.appendChild(row);
             });
 
+            // Manejar botones de paginación
             document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
             document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
         } else {
+            // Sin datos
             ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
             lastVisible = null;
             firstVisible = null;
@@ -148,28 +157,7 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
-async function obtenerConsecutivo() {
-    const consecutivoRef = doc(db, "config", "consecutivoTicket");
-    try {
-        const docSnap = await getDoc(consecutivoRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const nuevoConsecutivo = data.consecutivo + 1;
 
-            // Incrementar el valor del consecutivo en Firestore
-            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
-
-            return nuevoConsecutivo;
-        } else {
-            // Si no existe, inicializar el consecutivo en Firestore
-            await setDoc(consecutivoRef, { consecutivo: 1 });
-            return 1;
-        }
-    } catch (error) {
-        console.error("Error al obtener el consecutivo:", error);
-        throw error;
-    }
-}
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
