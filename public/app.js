@@ -152,17 +152,22 @@ async function obtenerConsecutivo() {
     const consecutivoRef = doc(db, "config", "consecutivoTicket");
     try {
         const docSnap = await getDoc(consecutivoRef);
+        console.log("Documento encontrado:", docSnap.exists());
+
         if (docSnap.exists()) {
             const data = docSnap.data();
+            console.log("Datos actuales:", data);
             const nuevoConsecutivo = data.consecutivo + 1;
 
             // Incrementar el valor del consecutivo en Firestore
             await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
+            console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
 
             return nuevoConsecutivo;
         } else {
             // Si no existe, inicializar el consecutivo en Firestore
             await setDoc(consecutivoRef, { consecutivo: 1 });
+            console.log("Consecutivo inicializado en 1");
             return 1;
         }
     } catch (error) {
@@ -170,6 +175,7 @@ async function obtenerConsecutivo() {
         throw error;
     }
 }
+
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
