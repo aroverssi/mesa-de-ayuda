@@ -229,20 +229,21 @@ document.addEventListener("DOMContentLoaded", () => {
         
 // Manejador para el envío de tickets por el usuario
 
+// Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
     // Obtener valores del formulario
-    const usuario = document.getElementById("usuario").value.trim();
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const usuario = document.getElementById("usuario")?.value.trim();
+    const company = document.getElementById("company")?.value.trim();
+    const email = document.getElementById("email")?.value.trim();
+    const descripcion = document.getElementById("descripcion")?.value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id")?.value.trim() || null;
+    const password = document.getElementById("password")?.value.trim() || null;
 
     // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+        alert("Por favor, complete todos los campos obligatorios.");
         return;
     }
 
@@ -256,19 +257,22 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
 
         // Obtener el consecutivo del ticket
         const consecutivo = await obtenerConsecutivo();
+        console.log(`Consecutivo obtenido: ${consecutivo}`);
 
         // Crear un ticket en Firestore
-        await addDoc(collection(db, "tickets"), {
+        const nuevoTicket = await addDoc(collection(db, "tickets"), {
             consecutivo, // Añadir el consecutivo al ticket
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
-            password: password || null,
+            teamviewerId,
+            password,
             estado: "pendiente",
             fechaApertura: new Date(),
         });
+
+        console.log("Ticket creado con éxito:", nuevoTicket.id);
 
         alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
         
@@ -277,11 +281,10 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
 
-        // Mostrar un mensaje de error según el tipo de problema
         if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+            alert("No tiene permiso para enviar tickets. Contacte al administrador.");
         } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+            alert("Hubo un problema al enviar el ticket. Inténtelo nuevamente.");
         }
     }
 });
