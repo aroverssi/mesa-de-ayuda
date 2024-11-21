@@ -1,35 +1,7 @@
 // Importar las funciones necesarias desde el SDK de Firebase
-import { 
-    initializeApp 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-
-import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    doc, 
-    getDoc, 
-    updateDoc, 
-    increment, 
-    setDoc, 
-    onSnapshot, 
-    query, 
-    orderBy, 
-    where, 
-    limit, 
-    startAfter, 
-    endBefore, 
-    limitToLast, 
-    getDocs, 
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-import { 
-    getAuth, 
-    signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -57,32 +29,27 @@ async function cargarPagina(isAdmin, direction = "next") {
         ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
         : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    // Mostrar un mensaje de carga
     ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
 
-    // Obtener los filtros
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
     const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
     const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
     const ticketFiltro = document.getElementById(isAdmin ? "adminFilterTicket" : "userFilterTicket")?.value || "";
 
-    // Iniciar la consulta base
     let consulta = collection(db, "tickets");
     const filtros = [];
 
-    // Aplicar los filtros opcionales
     if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
     if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
     if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
     if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
     if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
 
-    // Agregar ordenamiento por fecha de apertura
+    // Orden cronológico por defecto
     consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
 
     try {
-        // Paginación
         if (direction === "next" && lastVisible) {
             consulta = query(consulta, startAfter(lastVisible), limit(10));
         } else if (direction === "prev" && firstVisible) {
@@ -91,20 +58,17 @@ async function cargarPagina(isAdmin, direction = "next") {
             consulta = query(consulta, limit(10));
         }
 
-        // Obtener los datos de Firestore
         const snapshot = await getDocs(consulta);
 
         if (!snapshot.empty) {
             lastVisible = snapshot.docs[snapshot.docs.length - 1];
             firstVisible = snapshot.docs[0];
 
-            // Limpiar la tabla y llenar con los nuevos datos
             ticketTable.innerHTML = "";
             snapshot.forEach((doc) => {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-                // Estructura de la fila según el rol
                 row.innerHTML = isAdmin
                     ? `
                         <td>${ticket.consecutivo}</td>
@@ -127,9 +91,6 @@ async function cargarPagina(isAdmin, direction = "next") {
                             <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
                             <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
                         </td>
-                        <td>
-                            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
-                        </td>
                     `
                     : `
                         <td>${ticket.consecutivo}</td>
@@ -144,11 +105,9 @@ async function cargarPagina(isAdmin, direction = "next") {
                 ticketTable.appendChild(row);
             });
 
-            // Manejar botones de paginación
             document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
             document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
         } else {
-            // Sin datos
             ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
             lastVisible = null;
             firstVisible = null;
@@ -216,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-
+// Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
@@ -242,12 +201,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             return;
         }
 
-        // Obtener el consecutivo del ticket
-        const consecutivo = await obtenerConsecutivo();
-
         // Crear un ticket en Firestore
         await addDoc(collection(db, "tickets"), {
-            consecutivo, // Añadir el consecutivo al ticket
             usuario,
             company,
             email,
@@ -258,7 +213,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             fechaApertura: new Date(),
         });
 
-        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
+        alert("¡Ticket enviado con éxito!");
         
         // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
@@ -274,7 +229,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     }
 });
 
-
+        
 
         // Cerrar sesión del administrador
         auth.signOut();
@@ -355,23 +310,6 @@ async function actualizarTicket(ticketId) {
         console.error("Error al actualizar el ticket: ", error);
     }
 }
-// función eliminarTicket
-async function eliminarTicket(ticketId) {
-    try {
-        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
-        if (!confirmacion) return;
-
-        // Eliminar el documento del ticket en la base de datos
-        await deleteDoc(doc(db, "tickets", ticketId));
-
-        alert("Ticket eliminado con éxito.");
-        cargarPagina(true, "next"); // Recargar la tabla
-    } catch (error) {
-        console.error("Error al eliminar el ticket: ", error);
-        alert("Hubo un problema al intentar eliminar el ticket.");
-    }
-}
-
 
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
@@ -559,7 +497,9 @@ function descargarKpiPdf() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
-window.eliminarTicket = eliminarTicket;
+
+
+
 
 
 
