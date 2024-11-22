@@ -458,7 +458,6 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 }
 
 // Función para calcular y mostrar el KPI mensual
-
 async function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -473,8 +472,8 @@ async function calcularKpiMensual() {
         return;
     }
 
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
+    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);  // Primer día del mes
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);  // Último día del mes
 
     let totalTickets = 0;
     let ticketsCerrados = 0;
@@ -500,10 +499,14 @@ async function calcularKpiMensual() {
             const ticket = doc.data();
             console.log('Ticket:', ticket);  // Verificar qué datos estamos recibiendo
 
-            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+            // Convertir las fechas de Firestore Timestamp a milisegundos
+            const fechaApertura = ticket.fechaApertura.seconds * 1000;
+            const fechaCierre = ticket.fechaCierre ? ticket.fechaCierre.seconds * 1000 : null;
+
+            // Si el ticket está cerrado y tiene una fecha de cierre
+            if (ticket.estado === "cerrado" && fechaCierre) {
                 ticketsCerrados++;
-                const tiempoResolucion =
-                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;  // Asegurarse de que las fechas están en segundos
+                const tiempoResolucion = (fechaCierre - fechaApertura) / 3600000;  // Convertir a horas
                 sumaResolucion += tiempoResolucion;
             }
         });
