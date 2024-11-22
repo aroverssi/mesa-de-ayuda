@@ -40,46 +40,44 @@
             <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
             
             <!-- Formulario de Envío de Ticket -->
-<div class="card p-4 shadow-sm mb-5">
-    <h3>Enviar un Ticket</h3>
-    <form id="ticketForm" autocomplete="off">
-        <div class="form-group">
-            <label for="usuario">Nombre</label>
-            <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
-        </div>
-        <div class="form-group">
-            <label for="company">Compañía</label>
-            <select id="company" class="form-control" required>
-                <option value="">Seleccione una compañía</option>
-                <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                <option value="Allpack">Allpack</option>
-                <option value="Business On Line">Business On Line</option>
-                <option value="Zona Franca">Zona Franca</option>
-                <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="email">Correo Electrónico</label>
-            <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
-        </div>
-        <div class="form-group">
-            <label for="descripcion">Descripción del problema</label>
-            <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
-        </div>
-        <div class="form-group">
-            <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
-            <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
-        </div>
-        <div class="form-group">
-            <label for="password">Contraseña TeamViewer</label>
-            <input type="text" id="password" class="form-control" placeholder="Contraseña">
-        </div>
-        <!-- Aquí agregamos el atributo id al botón -->
-        <button type="submit" id="submitButton" class="btn btn-primary">Enviar Ticket</button>
-    </form>
-</div>
-
+            <div class="card p-4 shadow-sm mb-5">
+                <h3>Enviar un Ticket</h3>
+                <form id="ticketForm" autocomplete="off">
+                    <div class="form-group">
+                        <label for="usuario">Nombre</label>
+                        <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Compañía</label>
+                        <select id="company" class="form-control" required>
+                            <option value="">Seleccione una compañía</option>
+                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                            <option value="Allpack">Allpack</option>
+                            <option value="Business On Line">Business On Line</option>
+                            <option value="Zona Franca">Zona Franca</option>
+                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción del problema</label>
+                        <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
+                        <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña TeamViewer</label>
+                        <input type="text" id="password" class="form-control" placeholder="Contraseña">
+                    </div>
+                    <button type="submit" id="submitButton" class="btn btn-primary">Enviar Ticket</button>
+                </form>
+            </div>
 
             <!-- Filtros para Usuario -->
             <div class="form-inline mb-3">
@@ -105,13 +103,11 @@
                 <button id="userFilterClear" class="btn btn-secondary">Borrar Filtros</button>
             </div>
 
-            <!-- Botones de Paginación para Usuario -->
             <div class="d-flex justify-content-between mb-3">
                 <button id="prevPageUser" class="btn btn-secondary">Página Anterior</button>
                 <button id="nextPageUser" class="btn btn-secondary">Página Siguiente</button>
             </div>
 
-            <!-- Tablero de Tickets para Usuario -->
             <h2 class="text-center mb-4">Tablero de Tickets</h2>
             <table class="table table-bordered" id="ticketTableUser">
                 <thead>
@@ -133,7 +129,6 @@
         <div id="adminInterface" style="display: none;">
             <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
 
-            <!-- Filtros para Administrador -->
             <div class="form-inline mb-3">
                 <select id="adminFilterStatus" class="form-control mr-2">
                     <option value="">Todos los Estados</option>
@@ -157,34 +152,32 @@
                 <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
             </div>
 
-            <!-- Botones de Paginación para Administrador -->
             <div class="d-flex justify-content-between mb-3">
                 <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
                 <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
             </div>
 
-        <!-- Tablero de Tickets para Administrador -->
-<h2 class="text-center mb-4">Tablero de Tickets</h2>
-<table class="table table-bordered" id="ticketTableAdmin">
-    <thead>
-        <tr>
-            <th>Número de Ticket</th>
-            <th>Usuario</th>
-            <th>Compañía</th>
-            <th>Correo Electrónico</th>
-            <th>Descripción</th>
-            <th>ID TeamViewer</th>
-            <th>Contraseña TW</th>
-            <th>Estado</th>
-            <th>Fecha de Inicio</th>
-            <th>Fecha de Resolución</th>
-            <th>Comentarios</th>
-            <th>Acciones</th>
-            <th>Eliminar</th> <!-- Nueva columna para el botón "Eliminar" -->
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
+            <table class="table table-bordered" id="ticketTableAdmin">
+                <thead>
+                    <tr>
+                        <th>Número de Ticket</th>
+                        <th>Usuario</th>
+                        <th>Compañía</th>
+                        <th>Correo Electrónico</th>
+                        <th>Descripción</th>
+                        <th>ID TeamViewer</th>
+                        <th>Contraseña TW</th>
+                        <th>Estado</th>
+                        <th>Fecha de Inicio</th>
+                        <th>Fecha de Resolución</th>
+                        <th>Comentarios</th>
+                        <th>Acciones</th>
+                        <th>Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
 
             <!-- Estadísticas -->
             <h3 class="mt-5">Estadísticas del Administrador</h3>
@@ -218,11 +211,6 @@
             </div>
         </div>
     </div>
-   <script>
-        // Añadir event listeners para recalcular el KPI cuando cambian los campos de mes o año
-        document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
-        document.getElementById("kpiAnio")?.addEventListener("change", calcularKpiMensual);
-    </script> 
 </body>
 </html>
 
