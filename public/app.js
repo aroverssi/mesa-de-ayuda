@@ -46,6 +46,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const consecutivoRef = doc(db, "config", "consecutivoTicket");
+const docSnap = await getDoc(consecutivoRef);
+console.log(docSnap.exists() ? "Documento consecutivoTicket existe" : "Documento consecutivoTicket no existe");
+
 
 // Variables para paginación
 let lastVisible = null;
