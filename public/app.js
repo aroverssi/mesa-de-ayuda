@@ -46,9 +46,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const consecutivoRef = doc(db, "config", "consecutivoTicket");
-const docSnap = await getDoc(consecutivoRef);
-console.log(docSnap.exists() ? "Documento consecutivoTicket existe" : "Documento consecutivoTicket no existe");
+
 
 
 // Variables para paginación
@@ -179,24 +177,23 @@ async function obtenerConsecutivo() {
         throw error;
     }
 }
-
-
-
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
+    // Manejo del login del administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
         const password = prompt("Ingrese su contraseña:");
 
         try {
             // Autenticación del administrador
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            console.log("Administrador autenticado:", userCredential.user.email);
 
             // Mostrar la interfaz del administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
 
-            // Restablecer variables globales y cargar el tablero
+            // Restablecer variables globales y cargar la tabla de tickets
             lastVisible = null;
             firstVisible = null;
             await cargarPagina(true, "next");
@@ -211,100 +208,103 @@ document.addEventListener("DOMContentLoaded", () => {
             cargarEstadisticas();
             calcularKpiMensual();
         } catch (error) {
-            console.error("Error de autenticación:", error);
+            console.error("Error de autenticación del administrador:", error);
             alert("Credenciales incorrectas. Por favor, intente de nuevo.");
         }
     });
 
+    // Manejo del acceso como usuario
     document.getElementById("userLogin")?.addEventListener("click", () => {
-        // Mostrar la interfaz de usuario
+        console.log("Usuario seleccionado.");
+
+        // Mostrar la interfaz del usuario
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
 
-        // Restablecer variables globales y cargar el tablero
+        // Restablecer variables globales y cargar la tabla de tickets para el usuario
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
+    // Regresar a la selección de rol desde la interfaz de usuario
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de usuario
+        console.log("Regresando a la selección de rol desde usuario.");
         document.getElementById("userInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
 
+    // Regresar a la selección de rol desde la interfaz de administrador
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de administrador
+        console.log("Regresando a la selección de rol desde administrador.");
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
-        
+    });
 
-// Manejador para el envío de tickets por el usuario
-document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evitar recargar la página
+    // Manejo de envío de tickets por el usuario
+    document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evitar recargar la página
 
-    // Obtener valores del formulario
-    const usuario = document.getElementById("usuario").value.trim();
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-    const password = document.getElementById("password").value.trim();
+        // Obtener valores del formulario
+        const usuario = document.getElementById("usuario").value.trim();
+        const company = document.getElementById("company").value;
+        const email = document.getElementById("email").value.trim();
+        const descripcion = document.getElementById("descripcion").value.trim();
+        const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+        const password = document.getElementById("password").value.trim();
 
-    console.log("Datos del formulario:", { usuario, company, email, descripcion });
+        console.log("Datos del formulario recibidos:", { usuario, company, email, descripcion });
 
-    // Validar campos obligatorios
-    if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
-        return;
-    }
-
-    try {
-        // Validar formato del correo electrónico
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert("Por favor, ingrese un correo electrónico válido.");
+        // Validar campos obligatorios
+        if (!usuario || !company || !email || !descripcion) {
+            alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
             return;
         }
 
-        console.log("Validación de correo pasada.");
+        try {
+            // Validar formato del correo electrónico
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Por favor, ingrese un correo electrónico válido.");
+                return;
+            }
 
-        // Obtener el consecutivo del ticket
-        const consecutivo = await obtenerConsecutivo();
-        console.log("Consecutivo obtenido:", consecutivo);
+            console.log("Validación de correo pasada.");
 
-        // Crear un ticket en Firestore
-        const nuevoTicket = await addDoc(collection(db, "tickets"), {
-            consecutivo,
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId: teamviewerId || null,
-            password: password || null,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-        });
+            // Obtener el consecutivo del ticket
+            const consecutivo = await obtenerConsecutivo();
+            console.log("Consecutivo obtenido para el ticket:", consecutivo);
 
-        console.log("Ticket creado con éxito:", nuevoTicket.id);
+            // Crear un ticket en Firestore
+            const nuevoTicket = await addDoc(collection(db, "tickets"), {
+                consecutivo,
+                usuario,
+                company,
+                email,
+                descripcion,
+                teamviewerId: teamviewerId || null,
+                password: password || null,
+                estado: "pendiente",
+                fechaApertura: new Date(),
+            });
 
-        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
+            console.log("Ticket creado con éxito. ID del documento:", nuevoTicket.id);
 
-        // Restablecer formulario después del envío
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket:", error);
+            alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
 
-        if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
-        } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+            // Restablecer formulario después del envío
+            document.getElementById("ticketForm").reset();
+        } catch (error) {
+            console.error("Error al enviar el ticket:", error);
+
+            if (error.code === "permission-denied") {
+                alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+            } else {
+                alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+            }
         }
-    }
+    });
 });
-
-
-
 
 
         // Cerrar sesión del administrador
