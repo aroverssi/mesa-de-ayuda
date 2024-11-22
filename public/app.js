@@ -219,50 +219,73 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
+    // Manejador para el envío de tickets por el usuario
+document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Evitar recargar la página
 
-    // Manejador para el envío de tickets
-    document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-        event.preventDefault();
+    // Obtener valores del formulario
+    const usuario = document.getElementById("usuario").value.trim();
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-        const usuario = document.getElementById("usuario").value.trim();
-        const company = document.getElementById("company").value;
-        const email = document.getElementById("email").value.trim();
-        const descripcion = document.getElementById("descripcion").value.trim();
-        const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-        const password = document.getElementById("password").value.trim();
+    console.log("Datos del formulario:", { usuario, company, email, descripcion });
 
-        if (!usuario || !company || !email || !descripcion) {
-            alert("Por favor, complete todos los campos obligatorios.");
+    // Validar campos obligatorios
+    if (!usuario || !company || !email || !descripcion) {
+        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+        return;
+    }
+
+    try {
+        // Validar formato del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Por favor, ingrese un correo electrónico válido.");
             return;
         }
 
-        try {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                alert("Ingrese un correo válido.");
-                return;
-            }
+        console.log("Validación de correo pasada.");
 
-            const consecutivo = await obtenerConsecutivo();
-            await addDoc(collection(db, "tickets"), {
-                consecutivo,
-                usuario,
-                company,
-                email,
-                descripcion,
-                teamviewerId: teamviewerId || null,
-                password: password || null,
-                estado: "pendiente",
-                fechaApertura: new Date(),
-            });
+        // Obtener el consecutivo del ticket
+        const consecutivo = await obtenerConsecutivo();
+        console.log("Consecutivo obtenido:", consecutivo);
 
-            alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
-            document.getElementById("ticketForm").reset();
-        } catch (
+        // Crear un ticket en Firestore
+        const nuevoTicket = await addDoc(collection(db, "tickets"), {
+            consecutivo,
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId: teamviewerId || null,
+            password: password || null,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+        });
+
+        console.log("Ticket creado con éxito:", nuevoTicket.id);
+
+        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
+
+        // Restablecer formulario después del envío
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket:", error);
+
+        if (error.code === "permission-denied") {
+            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+        } else {
+            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+        }
+    }
+});
 
         // Cerrar sesión del administrador
         auth.signOut();
-    });
+  
 
     // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
