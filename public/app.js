@@ -375,7 +375,7 @@ async function eliminarTicket(ticketId) {
     }
 }
 
-// Cargar estadísticas del administrador
+// Función para cargar estadísticas del administrador
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
     if (!statsList) {
@@ -428,6 +428,7 @@ function cargarEstadisticas() {
 }
 
 // Función para calcular y mostrar el KPI mensual
+
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -438,7 +439,7 @@ function calcularKpiMensual() {
     const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
 
     // Validar si el mes y año fueron seleccionados correctamente
-    if (!mesSeleccionado || !anioSeleccionado) {
+    if (isNaN(mesSeleccionado) || isNaN(anioSeleccionado)) {
         alert("Por favor selecciona un mes y un año válidos.");
         return; // Termina la función si no se seleccionaron valores válidos
     }
@@ -494,7 +495,6 @@ function calcularKpiMensual() {
     );
 }
 
-
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
@@ -527,6 +527,8 @@ function descargarKpiPdf() {
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
+
+
 
 // Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes o año sean activos
 document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
