@@ -1,31 +1,7 @@
 // Importar las funciones necesarias desde el SDK de Firebase
-import { 
-    initializeApp 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-
-import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    doc, 
-    getDoc, 
-    updateDoc, 
-    setDoc, 
-    onSnapshot, 
-    query, 
-    orderBy, 
-    where, 
-    limit, 
-    startAfter, 
-    endBefore, 
-    getDocs, 
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-import { 
-    getAuth, 
-    signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -94,49 +70,43 @@ async function cargarPagina(isAdmin, direction = "next") {
                 const row = document.createElement("tr");
 
                 row.innerHTML = isAdmin
-    ? `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.teamviewerId || "N/A"}</td>
-        <td>${ticket.password || "N/A"}</td>
-        <td>${ticket.estado}</td>
-        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-        <td>
-            <select id="estadoSelect_${doc.id}">
-                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-            </select>
-            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
-        </td>
-    `
-    : `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.estado}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-    `;
+                    ? `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.teamviewerId || "N/A"}</td>
+                        <td>${ticket.password || "N/A"}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                        <td>
+                            <select id="estadoSelect_${doc.id}">
+                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                            </select>
+                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                        </td>
+                    `
+                    : `
+                        <td>${ticket.consecutivo}</td>
+                        <td>${ticket.usuario}</td>
+                        <td>${ticket.company}</td>
+                        <td>${ticket.email}</td>
+                        <td>${ticket.descripcion}</td>
+                        <td>${ticket.estado}</td>
+                        <td>${ticket.comentarios || "Sin comentarios"}</td>
+                    `;
 
                 ticketTable.appendChild(row);
             });
 
             document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
             document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
-
-            // Llamar a cargarEstadisticas después de cargar los tickets
-            cargarEstadisticas();
         } else {
             ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
             lastVisible = null;
@@ -147,143 +117,123 @@ async function cargarPagina(isAdmin, direction = "next") {
     }
 }
 
-// obtener consecutivo
-async function obtenerConsecutivo() {
-    const consecutivoRef = doc(db, "config", "consecutivoTicket");
-    try {
-        const docSnap = await getDoc(consecutivoRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const nuevoConsecutivo = data.consecutivo + 1;
-
-            console.log("Consecutivo actual:", data.consecutivo);
-            console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
-
-            // Incrementar el valor del consecutivo en Firestore
-            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
-
-            return nuevoConsecutivo;
-        } else {
-            console.log("El documento consecutivoTicket no existe. Inicializando...");
-            // Si no existe, inicializar el consecutivo en Firestore
-            await setDoc(consecutivoRef, { consecutivo: 1 });
-            return 1;
-        }
-    } catch (error) {
-        console.error("Error al obtener el consecutivo:", error);
-        throw error;
-    }
-}
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
-    // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
         const password = prompt("Ingrese su contraseña:");
 
         try {
+            // Autenticación del administrador
             await signInWithEmailAndPassword(auth, email, password);
+
+            // Mostrar la interfaz del administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
 
+            // Restablecer variables globales y cargar el tablero
             lastVisible = null;
             firstVisible = null;
             await cargarPagina(true, "next");
+
+            // Configuración predeterminada de los filtros de KPI
+            const defaultMes = new Date().getMonth() + 1; // Mes actual
+            const defaultAnio = new Date().getFullYear(); // Año actual
+            document.getElementById("kpiMes").value = defaultMes;
+            document.getElementById("kpiAnio").value = defaultAnio;
+
+            // Cargar estadísticas y KPI
+            cargarEstadisticas();
+            calcularKpiMensual();
         } catch (error) {
             console.error("Error de autenticación:", error);
-            alert("Credenciales incorrectas. Intente nuevamente.");
+            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
         }
     });
 
-    // Acceso para usuario
     document.getElementById("userLogin")?.addEventListener("click", () => {
+        // Mostrar la interfaz de usuario
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
 
+        // Restablecer variables globales y cargar el tablero
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
-    // Botón para regresar desde usuario
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
+        // Regresar a la selección de rol desde la interfaz de usuario
         document.getElementById("userInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
 
-    // Botón para regresar desde administrador
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
+        // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
-    });
+        
+// Manejador para el envío de tickets por el usuario
+// Manejador para el envío de tickets por el usuario
+document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Evitar recargar la página
 
-    // Manejador para el envío de tickets por el usuario
-    document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Evitar recargar la página
+    // Obtener valores del formulario
+    const usuario = document.getElementById("usuario").value.trim();
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-        // Obtener valores del formulario
-        const usuario = document.getElementById("usuario").value.trim();
-        const company = document.getElementById("company").value;
-        const email = document.getElementById("email").value.trim();
-        const descripcion = document.getElementById("descripcion").value.trim();
-        const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-        const password = document.getElementById("password").value.trim();
+    // Validar campos obligatorios
+    if (!usuario || !company || !email || !descripcion) {
+        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+        return;
+    }
 
-        console.log("Datos del formulario:", { usuario, company, email, descripcion });
-
-        // Validar campos obligatorios
-        if (!usuario || !company || !email || !descripcion) {
-            alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
+    try {
+        // Validar formato del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Por favor, ingrese un correo electrónico válido.");
             return;
         }
 
-        try {
-            // Validar formato del correo electrónico
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                alert("Por favor, ingrese un correo electrónico válido.");
-                return;
-            }
+        // Crear un ticket en Firestore
+        await addDoc(collection(db, "tickets"), {
+            usuario,
+            company,
+            email,
+            descripcion,
+            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            password: password || null,
+            estado: "pendiente",
+            fechaApertura: new Date(),
+        });
 
-            console.log("Validación de correo pasada.");
+        alert("¡Ticket enviado con éxito!");
+        
+        // Restablecer formulario después del envío
+        document.getElementById("ticketForm").reset();
+    } catch (error) {
+        console.error("Error al enviar el ticket:", error);
 
-            // Obtener el consecutivo del ticket
-            const consecutivo = await obtenerConsecutivo();
-            console.log("Consecutivo obtenido:", consecutivo);
-
-            // Crear un ticket en Firestore
-            const nuevoTicket = await addDoc(collection(db, "tickets"), {
-                consecutivo,
-                usuario,
-                company,
-                email,
-                descripcion,
-                teamviewerId: teamviewerId || null,
-                password: password || null,
-                estado: "pendiente",
-                fechaApertura: new Date(),
-            });
-
-            console.log("Ticket creado con éxito:", nuevoTicket.id);
-
-            alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
-
-            // Restablecer formulario después del envío
-            document.getElementById("ticketForm").reset();
-        } catch (error) {
-            console.error("Error al enviar el ticket:", error);
-
-            if (error.code === "permission-denied") {
-                alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
-            } else {
-                alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
-            }
+        // Mostrar un mensaje de error según el tipo de problema
+        if (error.code === "permission-denied") {
+            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+        } else {
+            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
         }
-    });
+    }
+});
 
-    // Cerrar sesión del administrador
-    auth.signOut();
+        
+
+        // Cerrar sesión del administrador
+        auth.signOut();
+    });
 
     // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
@@ -341,6 +291,7 @@ function limpiarFiltrosUsuario() {
     cargarPagina(false, "next"); // Recargar sin filtros
 }
 
+
 // Función para actualizar ticket
 async function actualizarTicket(ticketId) {
     const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
@@ -357,23 +308,6 @@ async function actualizarTicket(ticketId) {
         alert(`Ticket actualizado con éxito.`);
     } catch (error) {
         console.error("Error al actualizar el ticket: ", error);
-    }
-}
-
-// función eliminarTicket
-async function eliminarTicket(ticketId) {
-    try {
-        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
-        if (!confirmacion) return;
-
-        // Eliminar el documento del ticket en la base de datos
-        await deleteDoc(doc(db, "tickets", ticketId));
-
-        alert("Ticket eliminado con éxito.");
-        cargarPagina(true, "next"); // Recargar la tabla
-    } catch (error) {
-        console.error("Error al eliminar el ticket: ", error);
-        alert("Hubo un problema al intentar eliminar el ticket.");
     }
 }
 
@@ -427,9 +361,37 @@ function cargarEstadisticas() {
         }
     );
 }
+// Cargar estadísticas automáticamente al cambiar tickets
+function activarActualizacionEnTiempoReal(isAdmin) {
+    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
+    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
+
+    onSnapshot(collection(db, "tickets"), (snapshot) => {
+        ticketTable.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            const row = document.createElement("tr");
+            row.innerHTML = isAdmin
+                ? `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.company}</td>
+                    <td>${ticket.email}</td>
+                    <td>${ticket.descripcion}</td>
+                    <td>${ticket.estado}</td>
+                `
+                : `
+                    <td>${ticket.consecutivo}</td>
+                    <td>${ticket.usuario}</td>
+                    <td>${ticket.estado}</td>
+                `;
+            ticketTable.appendChild(row);
+        });
+    });
+}
 
 // Función para calcular y mostrar el KPI mensual
-async function calcularKpiMensual() {
+function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
@@ -443,44 +405,34 @@ async function calcularKpiMensual() {
         return;
     }
 
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);  // Primer día del mes
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);  // Último día del mes
+    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
 
     let totalTickets = 0;
     let ticketsCerrados = 0;
     let sumaResolucion = 0;
 
-    try {
-        const consulta = query(
+    onSnapshot(
+        query(
             collection(db, "tickets"),
             where("fechaApertura", ">=", inicioMes),
             where("fechaApertura", "<=", finMes)
-        );
-
-        console.log('Consulta:', consulta);
-
-        // Suscripción al snapshot para obtener datos en tiempo real
-        await onSnapshot(consulta, (snapshot) => {
-            if (snapshot.empty) {
-                console.log('No hay tickets para el mes seleccionado.');
-                return;
-            }
+        ),
+        (snapshot) => {
+            totalTickets = snapshot.size;
+            ticketsCerrados = 0;
+            sumaResolucion = 0;
 
             snapshot.forEach((doc) => {
                 const ticket = doc.data();
-                console.log('Ticket:', ticket);
-
-                const fechaApertura = ticket.fechaApertura.seconds * 1000;
-                const fechaCierre = ticket.fechaCierre ? ticket.fechaCierre.seconds * 1000 : null;
-
-                if (ticket.estado === "cerrado" && fechaCierre) {
+                if (ticket.estado === "cerrado" && ticket.fechaCierre) {
                     ticketsCerrados++;
-                    const tiempoResolucion = (fechaCierre - fechaApertura) / 3600000; // en horas
+                    const tiempoResolucion =
+                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
                     sumaResolucion += tiempoResolucion;
                 }
             });
 
-            totalTickets = snapshot.size;
             const promedioResolucion = ticketsCerrados
                 ? (sumaResolucion / ticketsCerrados).toFixed(2)
                 : "N/A";
@@ -488,29 +440,20 @@ async function calcularKpiMensual() {
                 ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
                 : "0";
 
-            // Logs para verificar los valores calculados
-            console.log("kpiTotal: ", totalTickets);
-            console.log("kpiCerrados: ", ticketsCerrados);
-            console.log("kpiPromedioResolucion: ", promedioResolucion);
-            console.log("kpiPorcentajeCerrados: ", porcentajeCerrados);
-
-            // Actualización del DOM
             kpiTotal.textContent = totalTickets;
             kpiCerrados.textContent = ticketsCerrados;
             kpiPromedioResolucion.textContent = promedioResolucion;
             kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
 
-            // Manejo del caso sin tickets
+            // Manejo de caso sin tickets
             if (totalTickets === 0) {
                 kpiTotal.textContent = "0";
                 kpiCerrados.textContent = "0";
                 kpiPromedioResolucion.textContent = "N/A";
                 kpiPorcentajeCerrados.textContent = "0%";
             }
-        });
-    } catch (error) {
-        console.error('Error al obtener los KPI:', error);
-    }
+        }
+    );
 }
 
 // Función para descargar el KPI en PDF
@@ -529,16 +472,10 @@ function descargarKpiPdf() {
     }
 
     // Obtener los datos del KPI desde el DOM
-    const kpiTotal = document.getElementById("kpiTotal")?.innerText || "N/A";
-    const kpiCerrados = document.getElementById("kpiCerrados")?.innerText || "N/A";
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.innerText || "N/A";
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.innerText || "N/A";
-
-    // Validar que los valores no estén vacíos
-    if (kpiTotal === "N/A" || kpiCerrados === "N/A" || kpiPromedioResolucion === "N/A" || kpiPorcentajeCerrados === "N/A") {
-        alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
-        return;
-    }
+    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
+    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
 
     // Generar el contenido del PDF
     pdf.setFontSize(16);
@@ -556,12 +493,14 @@ function descargarKpiPdf() {
 }
 
 
-
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
-window.eliminarTicket = eliminarTicket;
+
+
+
+
 
 
 
