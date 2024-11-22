@@ -148,33 +148,46 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+
+    // obtener consecutivo
 async function obtenerConsecutivo() {
     const consecutivoRef = doc(db, "config", "consecutivoTicket");
     try {
+        // Obtener el documento del consecutivo
         const docSnap = await getDoc(consecutivoRef);
-        console.log("Documento encontrado:", docSnap.exists());
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            console.log("Datos actuales:", data);
+            console.log("Consecutivo actual:", data.consecutivo);
+
             const nuevoConsecutivo = data.consecutivo + 1;
 
-            // Incrementar el valor del consecutivo en Firestore
+            // Incrementar el consecutivo en Firestore
             await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
             console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
 
             return nuevoConsecutivo;
         } else {
-            // Si no existe, inicializar el consecutivo en Firestore
+            console.log("Documento no existe. Inicializando consecutivo en 1.");
+
+            // Crear el documento si no existe
             await setDoc(consecutivoRef, { consecutivo: 1 });
-            console.log("Consecutivo inicializado en 1");
             return 1;
         }
     } catch (error) {
-        console.error("Error al obtener el consecutivo:", error);
+        console.error("Error al obtener o actualizar el consecutivo:", error);
+
+        // Manejar errores de Firestore
+        if (error.code === "not-found") {
+            console.error("El documento consecutivoTicket no fue encontrado.");
+        } else if (error.code === "permission-denied") {
+            console.error("Permisos denegados al intentar acceder o modificar el consecutivo.");
+        }
+
         throw error;
     }
 }
+
 
 
 // Manejo de la selección de rol
