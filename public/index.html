@@ -218,6 +218,11 @@
             </div>
         </div>
     </div>
+   <script>
+        // Añadir event listeners para recalcular el KPI cuando cambian los campos de mes o año
+        document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
+        document.getElementById("kpiAnio")?.addEventListener("change", calcularKpiMensual);
+    </script> 
 </body>
 </html>
 
