@@ -458,6 +458,7 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 }
 
 // Función para calcular y mostrar el KPI mensual
+
 async function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
@@ -479,49 +480,65 @@ async function calcularKpiMensual() {
     let ticketsCerrados = 0;
     let sumaResolucion = 0;
 
-    onSnapshot(
-        query(
-            collection(db, "tickets"),
-            where("fechaApertura", ">=", inicioMes),
-            where("fechaApertura", "<=", finMes)
-        ),
-        (snapshot) => {
-            totalTickets = snapshot.size;
-            ticketsCerrados = 0;
-            sumaResolucion = 0;
-
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-                    ticketsCerrados++;
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                }
-            });
-
-            const promedioResolucion = ticketsCerrados
-                ? (sumaResolucion / ticketsCerrados).toFixed(2)
-                : "N/A";
-            const porcentajeCerrados = totalTickets
-                ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-                : "0";
-
-            kpiTotal.textContent = totalTickets;
-            kpiCerrados.textContent = ticketsCerrados;
-            kpiPromedioResolucion.textContent = promedioResolucion;
-            kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
-
-            // Manejo de caso sin tickets
-            if (totalTickets === 0) {
-                kpiTotal.textContent = "0";
-                kpiCerrados.textContent = "0";
-                kpiPromedioResolucion.textContent = "N/A";
-                kpiPorcentajeCerrados.textContent = "0%";
-            }
-        }
+    // Comprobamos la consulta y sus resultados
+    const consulta = query(
+        collection(db, "tickets"),
+        where("fechaApertura", ">=", inicioMes),
+        where("fechaApertura", "<=", finMes)
     );
+
+    console.log('Consulta:', consulta);
+
+    // Suscripción al snapshot para obtener datos en tiempo real
+    onSnapshot(consulta, (snapshot) => {
+        if (snapshot.empty) {
+            console.log('No hay tickets para el mes seleccionado.');
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+            const ticket = doc.data();
+            console.log('Ticket:', ticket);  // Verificar qué datos estamos recibiendo
+
+            if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+                ticketsCerrados++;
+                const tiempoResolucion =
+                    (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;  // Asegurarse de que las fechas están en segundos
+                sumaResolucion += tiempoResolucion;
+            }
+        });
+
+        totalTickets = snapshot.size;
+        const promedioResolucion = ticketsCerrados
+            ? (sumaResolucion / ticketsCerrados).toFixed(2)
+            : "N/A";
+        const porcentajeCerrados = totalTickets
+            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+            : "0";
+
+        console.log('Estadísticas:', {
+            totalTickets,
+            ticketsCerrados,
+            promedioResolucion,
+            porcentajeCerrados
+        });
+
+        // Actualización de los elementos del DOM
+        kpiTotal.textContent = totalTickets;
+        kpiCerrados.textContent = ticketsCerrados;
+        kpiPromedioResolucion.textContent = promedioResolucion;
+        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+        // Manejo de caso sin tickets
+        if (totalTickets === 0) {
+            kpiTotal.textContent = "0";
+            kpiCerrados.textContent = "0";
+            kpiPromedioResolucion.textContent = "N/A";
+            kpiPorcentajeCerrados.textContent = "0%";
+        }
+    });
 }
+
 
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
