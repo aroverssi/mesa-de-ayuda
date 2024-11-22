@@ -1,577 +1,224 @@
-// Importar las funciones necesarias desde el SDK de Firebase
-import { 
-    initializeApp 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-
-import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    doc, 
-    getDoc, 
-    updateDoc, 
-    increment, 
-    setDoc, 
-    onSnapshot, 
-    query, 
-    orderBy, 
-    where, 
-    limit, 
-    startAfter, 
-    endBefore, 
-    limitToLast, 
-    getDocs, 
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-import { 
-    getAuth, 
-    signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-
-
-// Configuración de Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
-    authDomain: "mesa-de-ayuda-f5a6a.firebaseapp.com",
-    projectId: "mesa-de-ayuda-f5a6a",
-    storageBucket: "mesa-de-ayuda-f5a6a.firebasestorage.app",
-    messagingSenderId: "912872235241",
-    appId: "1:912872235241:web:2fcf8f473413562c931078",
-    measurementId: "G-0KBEFHH7P9"
-};
-
-// Inicializar Firebase, Firestore y Auth
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// Variables para paginación
-let lastVisible = null;
-let firstVisible = null;
-
-// Función para cargar tickets con filtros y paginación
-async function cargarPagina(isAdmin, direction = "next") {
-    const ticketTable = isAdmin
-        ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
-        : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
-
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
-
-    const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
-    const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
-    const fechaInicioFiltro = document.getElementById(isAdmin ? "adminFilterStartDate" : "userFilterStartDate")?.value || "";
-    const fechaFinalFiltro = document.getElementById(isAdmin ? "adminFilterEndDate" : "userFilterEndDate")?.value || "";
-    const ticketFiltro = document.getElementById(isAdmin ? "adminFilterTicket" : "userFilterTicket")?.value || "";
-
-    let consulta = collection(db, "tickets");
-    const filtros = [];
-
-    if (estadoFiltro) filtros.push(where("estado", "==", estadoFiltro));
-    if (companyFiltro) filtros.push(where("company", "==", companyFiltro));
-    if (fechaInicioFiltro) filtros.push(where("fechaApertura", ">=", new Date(fechaInicioFiltro)));
-    if (fechaFinalFiltro) filtros.push(where("fechaApertura", "<=", new Date(fechaFinalFiltro)));
-    if (ticketFiltro) filtros.push(where("consecutivo", "==", parseInt(ticketFiltro)));
-
-    // Orden cronológico por defecto
-    consulta = query(consulta, ...filtros, orderBy("fechaApertura", "asc"));
-
-    try {
-        if (direction === "next" && lastVisible) {
-            consulta = query(consulta, startAfter(lastVisible), limit(10));
-        } else if (direction === "prev" && firstVisible) {
-            consulta = query(consulta, endBefore(firstVisible), limitToLast(10));
-        } else {
-            consulta = query(consulta, limit(10));
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Ayuda</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Agregar la librería jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script type="module" src="app.js"></script>
+    <style>
+        #kpiContainer {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
         }
+        ul#adminStats {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul#adminStats li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <h1 class="text-center mb-4">Mesa de Ayuda</h1>
 
-        const snapshot = await getDocs(consulta);
+        <!-- Interfaz de Selección de Rol -->
+        <div id="roleSelection" class="card p-4 shadow-sm mb-5">
+            <h3>Selecciona tu rol</h3>
+            <button id="adminLogin" class="btn btn-primary">Administrador</button>
+            <button id="userLogin" class="btn btn-secondary">Usuario</button>
+        </div>
 
-        if (!snapshot.empty) {
-            lastVisible = snapshot.docs[snapshot.docs.length - 1];
-            firstVisible = snapshot.docs[0];
-
-            ticketTable.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                const row = document.createElement("tr");
-
-               row.innerHTML = isAdmin
-    ? `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.teamviewerId || "N/A"}</td>
-        <td>${ticket.password || "N/A"}</td>
-        <td>${ticket.estado}</td>
-        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-        <td>
-            <select id="estadoSelect_${doc.id}">
-                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+        <!-- Interfaz de Usuario -->
+        <div id="userInterface" style="display: none;">
+            <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+            
+            <!-- Formulario de Envío de Ticket -->
+<div class="card p-4 shadow-sm mb-5">
+    <h3>Enviar un Ticket</h3>
+    <form id="ticketForm" autocomplete="off">
+        <div class="form-group">
+            <label for="usuario">Nombre</label>
+            <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
+        </div>
+        <div class="form-group">
+            <label for="company">Compañía</label>
+            <select id="company" class="form-control" required>
+                <option value="">Seleccione una compañía</option>
+                <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                <option value="Allpack">Allpack</option>
+                <option value="Business On Line">Business On Line</option>
+                <option value="Zona Franca">Zona Franca</option>
+                <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
             </select>
-            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
-        </td>
-    `
-    : `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.estado}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-    `;
-
-
-                ticketTable.appendChild(row);
-            });
-
-            document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
-            document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
-        } else {
-            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
-            lastVisible = null;
-            firstVisible = null;
-        }
-    } catch (error) {
-        console.error("Error al cargar la página:", error);
-    }
-}
-async function obtenerConsecutivo() {
-    const consecutivoRef = doc(db, "config", "consecutivoTicket");
-    try {
-        const docSnap = await getDoc(consecutivoRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const nuevoConsecutivo = data.consecutivo + 1;
-
-            // Incrementar el valor del consecutivo en Firestore
-            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
-
-            return nuevoConsecutivo;
-        } else {
-            // Si no existe, inicializar el consecutivo en Firestore
-            await setDoc(consecutivoRef, { consecutivo: 1 });
-            return 1;
-        }
-    } catch (error) {
-        console.error("Error al obtener el consecutivo:", error);
-        throw error;
-    }
-}
-
-// Manejo de la selección de rol
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("adminLogin")?.addEventListener("click", async () => {
-        const email = prompt("Ingrese su correo de administrador:");
-        const password = prompt("Ingrese su contraseña:");
-
-        try {
-            // Autenticación del administrador
-            await signInWithEmailAndPassword(auth, email, password);
-
-            // Mostrar la interfaz del administrador
-            document.getElementById("roleSelection").style.display = "none";
-            document.getElementById("adminInterface").style.display = "block";
-
-            // Restablecer variables globales y cargar el tablero
-            lastVisible = null;
-            firstVisible = null;
-            await cargarPagina(true, "next");
-
-            // Configuración predeterminada de los filtros de KPI
-            const defaultMes = new Date().getMonth() + 1; // Mes actual
-            const defaultAnio = new Date().getFullYear(); // Año actual
-            document.getElementById("kpiMes").value = defaultMes;
-            document.getElementById("kpiAnio").value = defaultAnio;
-
-            // Cargar estadísticas y KPI
-            cargarEstadisticas();
-            calcularKpiMensual();
-        } catch (error) {
-            console.error("Error de autenticación:", error);
-            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
-        }
-    });
-
-    document.getElementById("userLogin")?.addEventListener("click", () => {
-        // Mostrar la interfaz de usuario
-        document.getElementById("roleSelection").style.display = "none";
-        document.getElementById("userInterface").style.display = "block";
-
-        // Restablecer variables globales y cargar el tablero
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(false, "next");
-    });
-
-    document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de usuario
-        document.getElementById("userInterface").style.display = "none";
-        document.getElementById("roleSelection").style.display = "block";
-    });
-
-    document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de administrador
-        document.getElementById("adminInterface").style.display = "none";
-        document.getElementById("roleSelection").style.display = "block";
-        
-// Manejador para el envío de tickets por el usuario
-
-document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evitar recargar la página
-
-    // Obtener valores del formulario
-    const usuario = document.getElementById("usuario").value.trim();
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    // Validar campos obligatorios
-    if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
-        return;
-    }
-
-    try {
-        // Validar formato del correo electrónico
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert("Por favor, ingrese un correo electrónico válido.");
-            return;
-        }
-
-        // Obtener el consecutivo del ticket
-        const consecutivo = await obtenerConsecutivo();
-
-        // Crear un ticket en Firestore
-        await addDoc(collection(db, "tickets"), {
-            consecutivo, // Añadir el consecutivo al ticket
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
-            password: password || null,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-        });
-
-        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
-        
-        // Restablecer formulario después del envío
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket:", error);
-
-        // Mostrar un mensaje de error según el tipo de problema
-        if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
-        } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
-        }
-    }
-});
-
-
-
-        // Cerrar sesión del administrador
-        auth.signOut();
-    });
-
-    // Configuración de eventos para la paginación
-    document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
-    document.getElementById("prevPageUser")?.addEventListener("click", () => cargarPagina(false, "prev"));
-    document.getElementById("nextPageAdmin")?.addEventListener("click", () => cargarPagina(true, "next"));
-    document.getElementById("prevPageAdmin")?.addEventListener("click", () => cargarPagina(true, "prev"));
-
-    // Aplicar filtros para usuario y administrador
-    document.getElementById("userFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(false, "next");
-    });
-
-    document.getElementById("adminFilterApply")?.addEventListener("click", () => {
-        lastVisible = null;
-        firstVisible = null;
-        cargarPagina(true, "next");
-    });
-
-    // Borrar filtros para usuario y administrador
-    document.getElementById("userFilterClear")?.addEventListener("click", () => {
-        limpiarFiltrosUsuario();
-    });
-
-    document.getElementById("adminFilterClear")?.addEventListener("click", () => {
-        limpiarFiltrosAdmin();
-    });
-
-    // Descargar el KPI en PDF
-    document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
-});
-
-// Función para limpiar filtros del administrador
-function limpiarFiltrosAdmin() {
-    document.getElementById("adminFilterStatus").value = "";
-    document.getElementById("adminFilterCompany").value = "";
-    document.getElementById("adminFilterStartDate").value = "";
-    document.getElementById("adminFilterEndDate").value = "";
-    document.getElementById("adminFilterTicket").value = "";
-    lastVisible = null;
-    firstVisible = null;
-    cargarPagina(true, "next"); // Recargar sin filtros
-}
-
-// Función para limpiar filtros del usuario
-function limpiarFiltrosUsuario() {
-    document.getElementById("userFilterStatus").value = "";
-    document.getElementById("userFilterCompany").value = "";
-    document.getElementById("userFilterStartDate").value = "";
-    document.getElementById("userFilterEndDate").value = "";
-    document.getElementById("userFilterTicket").value = "";
-    lastVisible = null;
-    firstVisible = null;
-    cargarPagina(false, "next"); // Recargar sin filtros
-}
-
-
-// Función para actualizar ticket
-async function actualizarTicket(ticketId) {
-    const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
-    const nuevoComentario = document.getElementById(`comentarios_${ticketId}`).value;
-    const fechaCierre = nuevoEstado === "cerrado" ? new Date() : null;
-
-    try {
-        await updateDoc(doc(db, "tickets", ticketId), {
-            estado: nuevoEstado,
-            comentarios: nuevoComentario,
-            fechaCierre: fechaCierre,
-        });
-
-        alert(`Ticket actualizado con éxito.`);
-    } catch (error) {
-        console.error("Error al actualizar el ticket: ", error);
-    }
-}
-// función eliminarTicket
-async function eliminarTicket(ticketId) {
-    try {
-        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
-        if (!confirmacion) return;
-
-        // Eliminar el documento del ticket en la base de datos
-        await deleteDoc(doc(db, "tickets", ticketId));
-
-        alert("Ticket eliminado con éxito.");
-        cargarPagina(true, "next"); // Recargar la tabla
-    } catch (error) {
-        console.error("Error al eliminar el ticket: ", error);
-        alert("Hubo un problema al intentar eliminar el ticket.");
-    }
-}
-
-
-// Cargar estadísticas del administrador
-function cargarEstadisticas() {
-    const statsList = document.getElementById("adminStats");
-    if (!statsList) {
-        console.error("El elemento adminStats no se encuentra en el DOM.");
-        return;
-    }
-
-    let totalTickets = 0,
-        totalCerrados = 0,
-        sumaResolucion = 0;
-
-    onSnapshot(
-        collection(db, "tickets"),
-        (snapshot) => {
-            if (snapshot.empty) {
-                statsList.innerHTML = `<li>No hay datos disponibles para mostrar.</li>`;
-                return;
-            }
-
-            totalTickets = snapshot.size;
-            totalCerrados = 0;
-            sumaResolucion = 0;
-
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre && ticket.fechaApertura) {
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                    totalCerrados++;
-                }
-            });
-
-            const promedioResolucion = totalCerrados
-                ? (sumaResolucion / totalCerrados).toFixed(2)
-                : "N/A";
-
-            statsList.innerHTML = `
-                <li>Total de Tickets: ${totalTickets}</li>
-                <li>Tickets Abiertos: ${totalTickets - totalCerrados}</li>
-                <li>Tickets Cerrados: ${totalCerrados}</li>
-                <li>Promedio de Resolución (en horas): ${promedioResolucion}</li>
-            `;
-        },
-        (error) => {
-            console.error("Error al obtener los tickets:", error);
-        }
-    );
-}
-// Cargar estadísticas automáticamente al cambiar tickets
-function activarActualizacionEnTiempoReal(isAdmin) {
-    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
-    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.estado}</td>
-                `;
-            ticketTable.appendChild(row);
-        });
-    });
-}
-
-// Función para calcular y mostrar el KPI mensual
-function calcularKpiMensual() {
-    const kpiTotal = document.getElementById("kpiTotal");
-    const kpiCerrados = document.getElementById("kpiCerrados");
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados");
-
-    const mesSeleccionado = parseInt(document.getElementById("kpiMes")?.value);
-    const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
-
-    if (!mesSeleccionado || !anioSeleccionado) {
-        alert("Por favor selecciona un mes y un año.");
-        return;
-    }
-
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
-
-    let totalTickets = 0;
-    let ticketsCerrados = 0;
-    let sumaResolucion = 0;
-
-    onSnapshot(
-        query(
-            collection(db, "tickets"),
-            where("fechaApertura", ">=", inicioMes),
-            where("fechaApertura", "<=", finMes)
-        ),
-        (snapshot) => {
-            totalTickets = snapshot.size;
-            ticketsCerrados = 0;
-            sumaResolucion = 0;
-
-            snapshot.forEach((doc) => {
-                const ticket = doc.data();
-                if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-                    ticketsCerrados++;
-                    const tiempoResolucion =
-                        (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-                    sumaResolucion += tiempoResolucion;
-                }
-            });
-
-            const promedioResolucion = ticketsCerrados
-                ? (sumaResolucion / ticketsCerrados).toFixed(2)
-                : "N/A";
-            const porcentajeCerrados = totalTickets
-                ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-                : "0";
-
-            kpiTotal.textContent = totalTickets;
-            kpiCerrados.textContent = ticketsCerrados;
-            kpiPromedioResolucion.textContent = promedioResolucion;
-            kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
-
-            // Manejo de caso sin tickets
-            if (totalTickets === 0) {
-                kpiTotal.textContent = "0";
-                kpiCerrados.textContent = "0";
-                kpiPromedioResolucion.textContent = "N/A";
-                kpiPorcentajeCerrados.textContent = "0%";
-            }
-        }
-    );
-}
-
-// Función para descargar el KPI en PDF
-function descargarKpiPdf() {
-    const { jsPDF } = window.jspdf; // Librería para generar PDFs
-    const pdf = new jsPDF();
-
-    // Obtener los valores seleccionados de mes y año
-    const mesSeleccionado = document.getElementById("kpiMes")?.value || "N/A";
-    const anioSeleccionado = document.getElementById("kpiAnio")?.value || "N/A";
-
-    // Validación para asegurarse de que mes y año han sido seleccionados
-    if (mesSeleccionado === "N/A" || anioSeleccionado === "N/A") {
-        alert("Por favor selecciona un mes y un año para el reporte.");
-        return;
-    }
-
-    // Obtener los datos del KPI desde el DOM
-    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
-    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
-
-    // Generar el contenido del PDF
-    pdf.setFontSize(16);
-    pdf.text(`Reporte Mensual de KPI`, 10, 10);
-    pdf.setFontSize(12);
-    pdf.text(`Mes: ${mesSeleccionado}`, 10, 20);
-    pdf.text(`Año: ${anioSeleccionado}`, 10, 30);
-    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 40);
-    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 50);
-    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 60);
-    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 70);
-
-    // Descargar el archivo PDF
-    pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
-}
-
-
-// Exportar funciones globales para acceso desde el HTML
-window.actualizarTicket = actualizarTicket;
-window.cargarPagina = cargarPagina;
-window.descargarKpiPdf = descargarKpiPdf;
-window.eliminarTicket = eliminarTicket;
-
+        </div>
+        <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
+        </div>
+        <div class="form-group">
+            <label for="descripcion">Descripción del problema</label>
+            <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
+            <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
+        </div>
+        <div class="form-group">
+            <label for="password">Contraseña TeamViewer</label>
+            <input type="text" id="password" class="form-control" placeholder="Contraseña">
+        </div>
+        <!-- Aquí agregamos el atributo id al botón -->
+        <button type="submit" id="submitButton" class="btn btn-primary">Enviar Ticket</button>
+    </form>
+</div>
+
+
+            <!-- Filtros para Usuario -->
+            <div class="form-inline mb-3">
+                <select id="userFilterStatus" class="form-control mr-2">
+                    <option value="">Todos los Estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en proceso">En Proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                </select>
+                <select id="userFilterCompany" class="form-control mr-2">
+                    <option value="">Todas las Compañías</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
+                <input type="date" id="userFilterStartDate" class="form-control mr-2">
+                <input type="date" id="userFilterEndDate" class="form-control mr-2">
+                <input type="number" id="userFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
+                <button id="userFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
+                <button id="userFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+            </div>
+
+            <!-- Botones de Paginación para Usuario -->
+            <div class="d-flex justify-content-between mb-3">
+                <button id="prevPageUser" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageUser" class="btn btn-secondary">Página Siguiente</button>
+            </div>
+
+            <!-- Tablero de Tickets para Usuario -->
+            <h2 class="text-center mb-4">Tablero de Tickets</h2>
+            <table class="table table-bordered" id="ticketTableUser">
+                <thead>
+                    <tr>
+                        <th>Número de Ticket</th>
+                        <th>Usuario</th>
+                        <th>Compañía</th>
+                        <th>Correo Electrónico</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Comentarios</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Interfaz de Administrador -->
+        <div id="adminInterface" style="display: none;">
+            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+
+            <!-- Filtros para Administrador -->
+            <div class="form-inline mb-3">
+                <select id="adminFilterStatus" class="form-control mr-2">
+                    <option value="">Todos los Estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en proceso">En Proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                </select>
+                <select id="adminFilterCompany" class="form-control mr-2">
+                    <option value="">Todas las Compañías</option>
+                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                    <option value="Allpack">Allpack</option>
+                    <option value="Business On Line">Business On Line</option>
+                    <option value="Zona Franca">Zona Franca</option>
+                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                </select>
+                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
+                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
+                <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
+                <button id="adminFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
+                <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+            </div>
+
+            <!-- Botones de Paginación para Administrador -->
+            <div class="d-flex justify-content-between mb-3">
+                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
+                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
+            </div>
+
+        <!-- Tablero de Tickets para Administrador -->
+<h2 class="text-center mb-4">Tablero de Tickets</h2>
+<table class="table table-bordered" id="ticketTableAdmin">
+    <thead>
+        <tr>
+            <th>Número de Ticket</th>
+            <th>Usuario</th>
+            <th>Compañía</th>
+            <th>Correo Electrónico</th>
+            <th>Descripción</th>
+            <th>ID TeamViewer</th>
+            <th>Contraseña TW</th>
+            <th>Estado</th>
+            <th>Fecha de Inicio</th>
+            <th>Fecha de Resolución</th>
+            <th>Comentarios</th>
+            <th>Acciones</th>
+            <th>Eliminar</th> <!-- Nueva columna para el botón "Eliminar" -->
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+            <!-- Estadísticas -->
+            <h3 class="mt-5">Estadísticas del Administrador</h3>
+            <ul id="adminStats"></ul>
+
+            <div id="kpiContainer">
+                <div class="form-inline mb-3">
+                    <label for="kpiMes" class="mr-2">Mes:</label>
+                    <select id="kpiMes" class="form-control mr-3">
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                    <label for="kpiAnio" class="mr-2">Año:</label>
+                    <input type="number" id="kpiAnio" class="form-control" placeholder="Año" min="2000" max="2100">
+                </div>
+                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+                <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
 
 
