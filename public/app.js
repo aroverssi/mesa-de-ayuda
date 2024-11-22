@@ -93,7 +93,7 @@ async function cargarPagina(isAdmin, direction = "next") {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-               row.innerHTML = isAdmin
+                row.innerHTML = isAdmin
     ? `
         <td>${ticket.consecutivo}</td>
         <td>${ticket.usuario}</td>
@@ -129,12 +129,14 @@ async function cargarPagina(isAdmin, direction = "next") {
         <td>${ticket.comentarios || "Sin comentarios"}</td>
     `;
 
-
                 ticketTable.appendChild(row);
             });
 
             document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
             document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
+
+            // Llamar a cargarEstadisticas después de cargar los tickets
+            cargarEstadisticas();
         } else {
             ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
             lastVisible = null;
@@ -144,6 +146,7 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+
 // obtener consecutivo
 async function obtenerConsecutivo() {
     const consecutivoRef = doc(db, "config", "consecutivoTicket");
@@ -171,6 +174,7 @@ async function obtenerConsecutivo() {
         throw error;
     }
 }
+
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
     // Login para administrador
@@ -213,73 +217,73 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
+
     // Manejador para el envío de tickets por el usuario
-document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
-    event.preventDefault(); // Evitar recargar la página
+    document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Evitar recargar la página
 
-    // Obtener valores del formulario
-    const usuario = document.getElementById("usuario").value.trim();
-    const company = document.getElementById("company").value;
-    const email = document.getElementById("email").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
-    const password = document.getElementById("password").value.trim();
+        // Obtener valores del formulario
+        const usuario = document.getElementById("usuario").value.trim();
+        const company = document.getElementById("company").value;
+        const email = document.getElementById("email").value.trim();
+        const descripcion = document.getElementById("descripcion").value.trim();
+        const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+        const password = document.getElementById("password").value.trim();
 
-    console.log("Datos del formulario:", { usuario, company, email, descripcion });
+        console.log("Datos del formulario:", { usuario, company, email, descripcion });
 
-    // Validar campos obligatorios
-    if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
-        return;
-    }
-
-    try {
-        // Validar formato del correo electrónico
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert("Por favor, ingrese un correo electrónico válido.");
+        // Validar campos obligatorios
+        if (!usuario || !company || !email || !descripcion) {
+            alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
             return;
         }
 
-        console.log("Validación de correo pasada.");
+        try {
+            // Validar formato del correo electrónico
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Por favor, ingrese un correo electrónico válido.");
+                return;
+            }
 
-        // Obtener el consecutivo del ticket
-        const consecutivo = await obtenerConsecutivo();
-        console.log("Consecutivo obtenido:", consecutivo);
+            console.log("Validación de correo pasada.");
 
-        // Crear un ticket en Firestore
-        const nuevoTicket = await addDoc(collection(db, "tickets"), {
-            consecutivo,
-            usuario,
-            company,
-            email,
-            descripcion,
-            teamviewerId: teamviewerId || null,
-            password: password || null,
-            estado: "pendiente",
-            fechaApertura: new Date(),
-        });
+            // Obtener el consecutivo del ticket
+            const consecutivo = await obtenerConsecutivo();
+            console.log("Consecutivo obtenido:", consecutivo);
 
-        console.log("Ticket creado con éxito:", nuevoTicket.id);
+            // Crear un ticket en Firestore
+            const nuevoTicket = await addDoc(collection(db, "tickets"), {
+                consecutivo,
+                usuario,
+                company,
+                email,
+                descripcion,
+                teamviewerId: teamviewerId || null,
+                password: password || null,
+                estado: "pendiente",
+                fechaApertura: new Date(),
+            });
 
-        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
+            console.log("Ticket creado con éxito:", nuevoTicket.id);
 
-        // Restablecer formulario después del envío
-        document.getElementById("ticketForm").reset();
-    } catch (error) {
-        console.error("Error al enviar el ticket:", error);
+            alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
 
-        if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
-        } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+            // Restablecer formulario después del envío
+            document.getElementById("ticketForm").reset();
+        } catch (error) {
+            console.error("Error al enviar el ticket:", error);
+
+            if (error.code === "permission-denied") {
+                alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
+            } else {
+                alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
+            }
         }
-    }
-});
+    });
 
-        // Cerrar sesión del administrador
-        auth.signOut();
-  
+    // Cerrar sesión del administrador
+    auth.signOut();
 
     // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
@@ -337,7 +341,6 @@ function limpiarFiltrosUsuario() {
     cargarPagina(false, "next"); // Recargar sin filtros
 }
 
-
 // Función para actualizar ticket
 async function actualizarTicket(ticketId) {
     const nuevoEstado = document.getElementById(`estadoSelect_${ticketId}`).value;
@@ -356,6 +359,7 @@ async function actualizarTicket(ticketId) {
         console.error("Error al actualizar el ticket: ", error);
     }
 }
+
 // función eliminarTicket
 async function eliminarTicket(ticketId) {
     try {
@@ -372,7 +376,6 @@ async function eliminarTicket(ticketId) {
         alert("Hubo un problema al intentar eliminar el ticket.");
     }
 }
-
 
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
@@ -424,6 +427,7 @@ function cargarEstadisticas() {
         }
     );
 }
+
 // Cargar estadísticas automáticamente al cambiar tickets
 function activarActualizacionEnTiempoReal(isAdmin) {
     const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
@@ -518,12 +522,6 @@ async function calcularKpiMensual() {
         }
     );
 }
-// Asegurar que no haya expresiones regulares mal formadas en validaciones
-function validarCorreo(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
 
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
@@ -560,7 +558,6 @@ function descargarKpiPdf() {
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
-
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
