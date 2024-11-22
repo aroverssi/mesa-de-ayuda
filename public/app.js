@@ -538,25 +538,6 @@ function descargarKpiPdf() {
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
     const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
 
-    pdf.setFontSize(16);
-    pdf.text(`Reporte Mensual de KPI`, 10, 10);
-    pdf.setFontSize(12);
-    pdf.text(`Mes: ${mesSeleccionado}`, 10, 20);
-    pdf.text(`Año: ${anioSeleccionado}`, 10, 30);
-    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 40);
-    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 50);
-    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 60);
-    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 70);
-
-    pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
-}
-
-    // Obtener los datos del KPI desde el DOM
-    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
-    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
-
     // Generar el contenido del PDF
     pdf.setFontSize(16);
     pdf.text(`Reporte Mensual de KPI`, 10, 10);
@@ -572,6 +553,9 @@ function descargarKpiPdf() {
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
 
+// Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes o año sean activos
+document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
+document.getElementById("kpiAnio")?.addEventListener("change", calcularKpiMensual);
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
