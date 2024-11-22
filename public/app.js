@@ -375,7 +375,6 @@ async function eliminarTicket(ticketId) {
     }
 }
 
-
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
     const statsList = document.getElementById("adminStats");
@@ -388,6 +387,7 @@ function cargarEstadisticas() {
         totalCerrados = 0,
         sumaResolucion = 0;
 
+    // Consultamos los tickets en tiempo real
     onSnapshot(
         collection(db, "tickets"),
         (snapshot) => {
@@ -425,34 +425,6 @@ function cargarEstadisticas() {
             console.error("Error al obtener los tickets:", error);
         }
     );
-}
-// Cargar estadísticas automáticamente al cambiar tickets
-function activarActualizacionEnTiempoReal(isAdmin) {
-    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
-    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.estado}</td>
-                `;
-            ticketTable.appendChild(row);
-        });
-    });
 }
 
 // Función para calcular y mostrar el KPI mensual
@@ -564,7 +536,6 @@ window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
 window.eliminarTicket = eliminarTicket;
-
 
 
 
