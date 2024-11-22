@@ -465,8 +465,9 @@ function calcularKpiMensual() {
     const mesSeleccionado = parseInt(document.getElementById("kpiMes")?.value);
     const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
 
-    if (!mesSeleccionado || !anioSeleccionado) {
-        alert("Por favor selecciona un mes y un año.");
+    // Validar si el mes y año fueron seleccionados correctamente
+    if (isNaN(mesSeleccionado) || isNaN(anioSeleccionado)) {
+        alert("Por favor selecciona un mes y un año válidos.");
         return;
     }
 
@@ -505,6 +506,7 @@ function calcularKpiMensual() {
                 ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
                 : "0";
 
+            // Asignar los valores calculados a los elementos del KPI
             kpiTotal.textContent = totalTickets;
             kpiCerrados.textContent = ticketsCerrados;
             kpiPromedioResolucion.textContent = promedioResolucion;
@@ -562,6 +564,7 @@ window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
 window.eliminarTicket = eliminarTicket;
+
 
 
 
