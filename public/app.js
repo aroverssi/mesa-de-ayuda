@@ -317,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
 
+
 // Función para limpiar filtros del administrador
 function limpiarFiltrosAdmin() {
     document.getElementById("adminFilterStatus").value = "";
@@ -541,6 +542,7 @@ async function calcularKpiMensual() {
         console.error('Error al obtener los KPI:', error);
     }
 }
+
 
 
 
