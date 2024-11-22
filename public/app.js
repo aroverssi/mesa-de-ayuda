@@ -438,9 +438,9 @@ function calcularKpiMensual() {
     const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
 
     // Validar si el mes y año fueron seleccionados correctamente
-    if (isNaN(mesSeleccionado) || isNaN(anioSeleccionado)) {
+    if (!mesSeleccionado || !anioSeleccionado) {
         alert("Por favor selecciona un mes y un año válidos.");
-        return;
+        return; // Termina la función si no se seleccionaron valores válidos
     }
 
     const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
@@ -494,6 +494,7 @@ function calcularKpiMensual() {
     );
 }
 
+
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
@@ -536,9 +537,6 @@ window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
 window.eliminarTicket = eliminarTicket;
-
-
-
 
 
 
