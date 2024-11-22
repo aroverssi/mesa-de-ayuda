@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("roleSelection").style.display = "block";
         
 // Manejador para el envío de tickets por el usuario
-// Manejador para el envío de tickets por el usuario
+ // Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
@@ -186,6 +186,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     const descripcion = document.getElementById("descripcion").value.trim();
     const teamviewerId = document.getElementById("teamviewer_id").value.trim();
     const password = document.getElementById("password").value.trim();
+
+    console.log("Datos del formulario:", { usuario, company, email, descripcion });
 
     // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
@@ -201,26 +203,34 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             return;
         }
 
+        console.log("Validación de correo pasada.");
+
+        // Obtener el consecutivo del ticket
+        const consecutivo = await obtenerConsecutivo();
+        console.log("Consecutivo obtenido:", consecutivo);
+
         // Crear un ticket en Firestore
-        await addDoc(collection(db, "tickets"), {
+        const nuevoTicket = await addDoc(collection(db, "tickets"), {
+            consecutivo,
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            teamviewerId: teamviewerId || null,
             password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
         });
 
-        alert("¡Ticket enviado con éxito!");
-        
+        console.log("Ticket creado con éxito:", nuevoTicket.id);
+
+        alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
+
         // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
 
-        // Mostrar un mensaje de error según el tipo de problema
         if (error.code === "permission-denied") {
             alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
         } else {
@@ -229,7 +239,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     }
 });
 
-        
 
         // Cerrar sesión del administrador
         auth.signOut();
