@@ -148,46 +148,35 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
-
-    // obtener consecutivo
+// obtener consecutivo
 async function obtenerConsecutivo() {
     const consecutivoRef = doc(db, "config", "consecutivoTicket");
     try {
-        // Obtener el documento del consecutivo
         const docSnap = await getDoc(consecutivoRef);
-
         if (docSnap.exists()) {
             const data = docSnap.data();
-            console.log("Consecutivo actual:", data.consecutivo);
-
             const nuevoConsecutivo = data.consecutivo + 1;
 
-            // Incrementar el consecutivo en Firestore
-            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
+            console.log("Consecutivo actual:", data.consecutivo);
             console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
+
+            // Incrementar el valor del consecutivo en Firestore
+            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
 
             return nuevoConsecutivo;
         } else {
-            console.log("Documento no existe. Inicializando consecutivo en 1.");
-
-            // Crear el documento si no existe
+            console.log("El documento no existe, inicializando...");
+            // Si no existe, inicializar el consecutivo en Firestore
             await setDoc(consecutivoRef, { consecutivo: 1 });
             return 1;
         }
     } catch (error) {
-        console.error("Error al obtener o actualizar el consecutivo:", error);
-
-        // Manejar errores de Firestore
-        if (error.code === "not-found") {
-            console.error("El documento consecutivoTicket no fue encontrado.");
-        } else if (error.code === "permission-denied") {
-            console.error("Permisos denegados al intentar acceder o modificar el consecutivo.");
-        }
-
+        console.error("Error al obtener el consecutivo:", error);
         throw error;
     }
 }
 
+    
 
 
 // Manejo de la selección de rol
