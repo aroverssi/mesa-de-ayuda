@@ -539,10 +539,16 @@ function descargarKpiPdf() {
     }
 
     // Obtener los datos del KPI desde el DOM
-    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
-    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
+    const kpiTotal = document.getElementById("kpiTotal")?.innerText || "N/A";
+    const kpiCerrados = document.getElementById("kpiCerrados")?.innerText || "N/A";
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.innerText || "N/A";
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.innerText || "N/A";
+
+    // Validar que los valores no estén vacíos
+    if (kpiTotal === "N/A" || kpiCerrados === "N/A" || kpiPromedioResolucion === "N/A" || kpiPorcentajeCerrados === "N/A") {
+        alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
+        return;
+    }
 
     // Generar el contenido del PDF
     pdf.setFontSize(16);
@@ -558,6 +564,7 @@ function descargarKpiPdf() {
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
+
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
