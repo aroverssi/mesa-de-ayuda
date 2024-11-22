@@ -1,4 +1,4 @@
-/ Importar las funciones necesarias desde el SDK de Firebase
+// Importar las funciones necesarias desde el SDK de Firebase
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -10,7 +10,6 @@ import {
     doc, 
     getDoc, 
     updateDoc, 
-    increment, 
     setDoc, 
     onSnapshot, 
     query, 
@@ -19,7 +18,6 @@ import {
     limit, 
     startAfter, 
     endBefore, 
-    limitToLast, 
     getDocs, 
     deleteDoc 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
@@ -28,8 +26,6 @@ import {
     getAuth, 
     signInWithEmailAndPassword 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -46,8 +42,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-
 
 // Variables para paginación
 let lastVisible = null;
@@ -523,6 +517,11 @@ async function calcularKpiMensual() {
             }
         }
     );
+}
+// Asegurar que no haya expresiones regulares mal formadas en validaciones
+function validarCorreo(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 
