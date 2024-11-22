@@ -176,19 +176,6 @@ async function obtenerConsecutivo() {
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
-    // Establecer valores predeterminados para los campos de Mes y Año
-    const mesSeleccionado = document.getElementById("kpiMes");
-    const anioSeleccionado = document.getElementById("kpiAnio");
-
-    // Si los campos no tienen valor, asignar el valor por defecto
-    if (!mesSeleccionado.value) {
-        mesSeleccionado.value = new Date().getMonth() + 1; // Establece el mes actual
-    }
-
-    if (!anioSeleccionado.value) {
-        anioSeleccionado.value = new Date().getFullYear(); // Establece el año actual
-    }
-
     // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
@@ -219,9 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
         firstVisible = null;
         cargarPagina(false, "next");
     });
-});  
-
-
 
     // Botón para regresar desde usuario
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
@@ -555,7 +539,6 @@ window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
 window.eliminarTicket = eliminarTicket;
-
 
 
 
