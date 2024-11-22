@@ -242,16 +242,18 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     event.preventDefault(); // Evitar recargar la página
 
     // Obtener valores del formulario
-    const usuario = document.getElementById("usuario")?.value.trim();
-    const company = document.getElementById("company")?.value.trim();
-    const email = document.getElementById("email")?.value.trim();
-    const descripcion = document.getElementById("descripcion")?.value.trim();
-    const teamviewerId = document.getElementById("teamviewer_id")?.value.trim() || null;
-    const password = document.getElementById("password")?.value.trim() || null;
+    const usuario = document.getElementById("usuario").value.trim();
+    const company = document.getElementById("company").value;
+    const email = document.getElementById("email").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
+    const teamviewerId = document.getElementById("teamviewer_id").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    console.log("Datos del formulario:", { usuario, company, email, descripcion });
 
     // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
-        alert("Por favor, complete todos los campos obligatorios.");
+        alert("Por favor, complete todos los campos obligatorios: Nombre, Compañía, Correo Electrónico y Descripción.");
         return;
     }
 
@@ -263,9 +265,11 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             return;
         }
 
+        console.log("Validación de correo pasada.");
+
         // Obtener el consecutivo del ticket
         const consecutivo = await obtenerConsecutivo();
-        console.log(`Consecutivo obtenido: ${consecutivo}`);
+        console.log("Consecutivo obtenido:", consecutivo);
 
         // Crear un ticket en Firestore
         const nuevoTicket = await addDoc(collection(db, "tickets"), {
@@ -274,8 +278,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             company,
             email,
             descripcion,
-            teamviewerId,
-            password,
+            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
         });
@@ -283,19 +287,21 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
         console.log("Ticket creado con éxito:", nuevoTicket.id);
 
         alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
-        
+
         // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
 
+        // Mostrar un mensaje de error según el tipo de problema
         if (error.code === "permission-denied") {
-            alert("No tiene permiso para enviar tickets. Contacte al administrador.");
+            alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
         } else {
-            alert("Hubo un problema al enviar el ticket. Inténtelo nuevamente.");
+            alert("Hubo un problema al enviar el ticket. Inténtelo de nuevo más tarde.");
         }
     }
 });
+
 
 
 
