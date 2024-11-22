@@ -472,8 +472,8 @@ async function calcularKpiMensual() {
         return;
     }
 
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
+    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);  // Primer día del mes
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);  // Último día del mes
 
     let totalTickets = 0;
     let ticketsCerrados = 0;
@@ -517,11 +517,11 @@ async function calcularKpiMensual() {
                 ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
                 : "0";
 
-            // Validamos que los valores no sean vacíos
-            if (!totalTickets || !ticketsCerrados || !promedioResolucion || !porcentajeCerrados) {
-                alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
-                return;
-            }
+            // Logs para verificar los valores calculados
+            console.log("kpiTotal: ", totalTickets);
+            console.log("kpiCerrados: ", ticketsCerrados);
+            console.log("kpiPromedioResolucion: ", promedioResolucion);
+            console.log("kpiPorcentajeCerrados: ", porcentajeCerrados);
 
             // Actualización del DOM
             kpiTotal.textContent = totalTickets;
@@ -541,6 +541,7 @@ async function calcularKpiMensual() {
         console.error('Error al obtener los KPI:', error);
     }
 }
+
 
 
 // Función para descargar el KPI en PDF
