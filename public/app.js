@@ -526,6 +526,12 @@ async function calcularKpiMensual() {
             porcentajeCerrados
         });
 
+        // Validar que los valores estén disponibles antes de actualizar el DOM
+        if (!totalTickets || !ticketsCerrados || !promedioResolucion || !porcentajeCerrados) {
+            alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
+            return;
+        }
+
         // Actualización de los elementos del DOM
         kpiTotal.textContent = totalTickets;
         kpiCerrados.textContent = ticketsCerrados;
@@ -541,7 +547,6 @@ async function calcularKpiMensual() {
         }
     });
 }
-
 
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
@@ -584,6 +589,7 @@ function descargarKpiPdf() {
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
 }
+
 
 
 // Exportar funciones globales para acceso desde el HTML
