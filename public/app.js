@@ -317,7 +317,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("downloadKpiPdf")?.addEventListener("click", descargarKpiPdf);
 });
 
-
 // Función para limpiar filtros del administrador
 function limpiarFiltrosAdmin() {
     document.getElementById("adminFilterStatus").value = "";
@@ -429,35 +428,6 @@ function cargarEstadisticas() {
     );
 }
 
-// Cargar estadísticas automáticamente al cambiar tickets
-function activarActualizacionEnTiempoReal(isAdmin) {
-    const tabla = isAdmin ? "ticketTableAdmin" : "ticketTableUser";
-    const ticketTable = document.getElementById(tabla).getElementsByTagName("tbody")[0];
-
-    onSnapshot(collection(db, "tickets"), (snapshot) => {
-        ticketTable.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            const row = document.createElement("tr");
-            row.innerHTML = isAdmin
-                ? `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.company}</td>
-                    <td>${ticket.email}</td>
-                    <td>${ticket.descripcion}</td>
-                    <td>${ticket.estado}</td>
-                `
-                : `
-                    <td>${ticket.consecutivo}</td>
-                    <td>${ticket.usuario}</td>
-                    <td>${ticket.estado}</td>
-                `;
-            ticketTable.appendChild(row);
-        });
-    });
-}
-
 // Función para calcular y mostrar el KPI mensual
 async function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
@@ -542,9 +512,6 @@ async function calcularKpiMensual() {
         console.error('Error al obtener los KPI:', error);
     }
 }
-
-
-
 
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
