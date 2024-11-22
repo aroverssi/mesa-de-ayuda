@@ -459,7 +459,6 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 
 // Función para calcular y mostrar el KPI mensual
 async function calcularKpiMensual() {
-    // Se cambian a textContent para asegurar que los valores sean correctamente obtenidos
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
@@ -473,80 +472,74 @@ async function calcularKpiMensual() {
         return;
     }
 
-    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);  // Primer día del mes
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);  // Último día del mes
+    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
 
     let totalTickets = 0;
     let ticketsCerrados = 0;
     let sumaResolucion = 0;
 
-    // Comprobamos la consulta y sus resultados
-    const consulta = query(
-        collection(db, "tickets"),
-        where("fechaApertura", ">=", inicioMes),
-        where("fechaApertura", "<=", finMes)
-    );
+    try {
+        const consulta = query(
+            collection(db, "tickets"),
+            where("fechaApertura", ">=", inicioMes),
+            where("fechaApertura", "<=", finMes)
+        );
 
-    console.log('Consulta:', consulta);
+        console.log('Consulta:', consulta);
 
-    // Suscripción al snapshot para obtener datos en tiempo real
-    onSnapshot(consulta, (snapshot) => {
-        if (snapshot.empty) {
-            console.log('No hay tickets para el mes seleccionado.');
-            return;
-        }
+        // Suscripción al snapshot para obtener datos en tiempo real
+        await onSnapshot(consulta, (snapshot) => {
+            if (snapshot.empty) {
+                console.log('No hay tickets para el mes seleccionado.');
+                return;
+            }
 
-        snapshot.forEach((doc) => {
-            const ticket = doc.data();
-            console.log('Ticket:', ticket);  // Verificar qué datos estamos recibiendo
+            snapshot.forEach((doc) => {
+                const ticket = doc.data();
+                console.log('Ticket:', ticket);
 
-            // Convertir las fechas de Firestore Timestamp a milisegundos
-            const fechaApertura = ticket.fechaApertura.seconds * 1000;
-            const fechaCierre = ticket.fechaCierre ? ticket.fechaCierre.seconds * 1000 : null;
+                const fechaApertura = ticket.fechaApertura.seconds * 1000;
+                const fechaCierre = ticket.fechaCierre ? ticket.fechaCierre.seconds * 1000 : null;
 
-            // Si el ticket está cerrado y tiene una fecha de cierre
-            if (ticket.estado === "cerrado" && fechaCierre) {
-                ticketsCerrados++;
-                const tiempoResolucion = (fechaCierre - fechaApertura) / 3600000;  // Convertir a horas
-                sumaResolucion += tiempoResolucion;
+                if (ticket.estado === "cerrado" && fechaCierre) {
+                    ticketsCerrados++;
+                    const tiempoResolucion = (fechaCierre - fechaApertura) / 3600000; // en horas
+                    sumaResolucion += tiempoResolucion;
+                }
+            });
+
+            totalTickets = snapshot.size;
+            const promedioResolucion = ticketsCerrados
+                ? (sumaResolucion / ticketsCerrados).toFixed(2)
+                : "N/A";
+            const porcentajeCerrados = totalTickets
+                ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
+                : "0";
+
+            // Validamos que los valores no sean vacíos
+            if (!totalTickets || !ticketsCerrados || !promedioResolucion || !porcentajeCerrados) {
+                alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
+                return;
+            }
+
+            // Actualización del DOM
+            kpiTotal.textContent = totalTickets;
+            kpiCerrados.textContent = ticketsCerrados;
+            kpiPromedioResolucion.textContent = promedioResolucion;
+            kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
+
+            // Manejo del caso sin tickets
+            if (totalTickets === 0) {
+                kpiTotal.textContent = "0";
+                kpiCerrados.textContent = "0";
+                kpiPromedioResolucion.textContent = "N/A";
+                kpiPorcentajeCerrados.textContent = "0%";
             }
         });
-
-        totalTickets = snapshot.size;
-        const promedioResolucion = ticketsCerrados
-            ? (sumaResolucion / ticketsCerrados).toFixed(2)
-            : "N/A";
-        const porcentajeCerrados = totalTickets
-            ? ((ticketsCerrados / totalTickets) * 100).toFixed(2)
-            : "0";
-
-        console.log('Estadísticas:', {
-            totalTickets,
-            ticketsCerrados,
-            promedioResolucion,
-            porcentajeCerrados
-        });
-
-        // Validación antes de actualizar el DOM para evitar mostrar "N/A" cuando no haya datos válidos
-        if (!totalTickets || !ticketsCerrados || promedioResolucion === "N/A" || porcentajeCerrados === "0") {
-            alert("No se pudo obtener la información del KPI correctamente. Verifica que los valores estén visibles.");
-            return;
-        }
-
-        // Actualización de los elementos del DOM
-        kpiTotal.textContent = totalTickets;
-        kpiCerrados.textContent = ticketsCerrados;
-        kpiPromedioResolucion.textContent = promedioResolucion;
-        kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
-
-        // Manejo de caso sin tickets
-        if (totalTickets === 0) {
-            kpiTotal.textContent = "0";
-            kpiCerrados.textContent = "0";
-            kpiPromedioResolucion.textContent = "N/A";
-            kpiPorcentajeCerrados.textContent = "0%";
-        }
-    });
+    } catch (error) {
+        console.error('Error al obtener los KPI:', error);
+    }
 }
 
 
