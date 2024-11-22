@@ -165,7 +165,7 @@ async function obtenerConsecutivo() {
 
             return nuevoConsecutivo;
         } else {
-            console.log("El documento no existe, inicializando...");
+            console.log("El documento consecutivoTicket no existe. Inicializando...");
             // Si no existe, inicializar el consecutivo en Firestore
             await setDoc(consecutivoRef, { consecutivo: 1 });
             return 1;
@@ -176,7 +176,6 @@ async function obtenerConsecutivo() {
     }
 }
 
-    
 
 
 // Manejo de la selección de rol
@@ -235,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
         
-// Manejador para el envío de tickets por el usuario
 
 // Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
@@ -273,12 +271,12 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
 
         // Crear un ticket en Firestore
         const nuevoTicket = await addDoc(collection(db, "tickets"), {
-            consecutivo, // Añadir el consecutivo al ticket
+            consecutivo,
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            teamviewerId: teamviewerId || null,
             password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
@@ -293,7 +291,6 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
 
-        // Mostrar un mensaje de error según el tipo de problema
         if (error.code === "permission-denied") {
             alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
         } else {
@@ -301,6 +298,7 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
         }
     }
 });
+
 
 
 
