@@ -510,7 +510,6 @@ function calcularKpiMensual() {
             kpiPromedioResolucion.textContent = promedioResolucion;
             kpiPorcentajeCerrados.textContent = `${porcentajeCerrados}%`;
 
-            // Manejo de caso sin tickets
             if (totalTickets === 0) {
                 kpiTotal.textContent = "0";
                 kpiCerrados.textContent = "0";
@@ -526,15 +525,31 @@ function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
     const pdf = new jsPDF();
 
-    // Obtener los valores seleccionados de mes y año
     const mesSeleccionado = document.getElementById("kpiMes")?.value || "N/A";
     const anioSeleccionado = document.getElementById("kpiAnio")?.value || "N/A";
 
-    // Validación para asegurarse de que mes y año han sido seleccionados
     if (mesSeleccionado === "N/A" || anioSeleccionado === "N/A") {
         alert("Por favor selecciona un mes y un año para el reporte.");
         return;
     }
+
+    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
+    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
+    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
+    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
+
+    pdf.setFontSize(16);
+    pdf.text(`Reporte Mensual de KPI`, 10, 10);
+    pdf.setFontSize(12);
+    pdf.text(`Mes: ${mesSeleccionado}`, 10, 20);
+    pdf.text(`Año: ${anioSeleccionado}`, 10, 30);
+    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 40);
+    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 50);
+    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 60);
+    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 70);
+
+    pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
+}
 
     // Obtener los datos del KPI desde el DOM
     const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
