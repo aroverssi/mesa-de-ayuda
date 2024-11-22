@@ -219,7 +219,8 @@ document.addEventListener("DOMContentLoaded", () => {
         firstVisible = null;
         cargarPagina(false, "next");
     });
-});
+});  
+
 
 
     // Botón para regresar desde usuario
