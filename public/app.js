@@ -1,7 +1,35 @@
 // Importar las funciones necesarias desde el SDK de Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, increment, setDoc, onSnapshot, query, orderBy, where, limit, startAfter, endBefore, limitToLast, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { 
+    initializeApp 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    doc, 
+    getDoc, 
+    updateDoc, 
+    increment, 
+    setDoc, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    where, 
+    limit, 
+    startAfter, 
+    endBefore, 
+    limitToLast, 
+    getDocs, 
+    deleteDoc 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+import { 
+    getAuth, 
+    signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -18,6 +46,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+
 
 // Variables para paginación
 let lastVisible = null;
@@ -69,38 +99,42 @@ async function cargarPagina(isAdmin, direction = "next") {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-                row.innerHTML = isAdmin
-                    ? `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.teamviewerId || "N/A"}</td>
-                        <td>${ticket.password || "N/A"}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-                        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                        <td>
-                            <select id="estadoSelect_${doc.id}">
-                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-                            </select>
-                            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-                        </td>
-                    `
-                    : `
-                        <td>${ticket.consecutivo}</td>
-                        <td>${ticket.usuario}</td>
-                        <td>${ticket.company}</td>
-                        <td>${ticket.email}</td>
-                        <td>${ticket.descripcion}</td>
-                        <td>${ticket.estado}</td>
-                        <td>${ticket.comentarios || "Sin comentarios"}</td>
-                    `;
+               row.innerHTML = isAdmin
+    ? `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.teamviewerId || "N/A"}</td>
+        <td>${ticket.password || "N/A"}</td>
+        <td>${ticket.estado}</td>
+        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
+        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+        <td>
+            <select id="estadoSelect_${doc.id}">
+                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+            </select>
+            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
+            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+        </td>
+        <td>
+            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
+        </td>
+    `
+    : `
+        <td>${ticket.consecutivo}</td>
+        <td>${ticket.usuario}</td>
+        <td>${ticket.company}</td>
+        <td>${ticket.email}</td>
+        <td>${ticket.descripcion}</td>
+        <td>${ticket.estado}</td>
+        <td>${ticket.comentarios || "Sin comentarios"}</td>
+    `;
+
 
                 ticketTable.appendChild(row);
             });
@@ -116,66 +150,76 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+// obtener consecutivo
+async function obtenerConsecutivo() {
+    const consecutivoRef = doc(db, "config", "consecutivoTicket");
+    try {
+        const docSnap = await getDoc(consecutivoRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const nuevoConsecutivo = data.consecutivo + 1;
 
+            console.log("Consecutivo actual:", data.consecutivo);
+            console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
 
+            // Incrementar el valor del consecutivo en Firestore
+            await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
+
+            return nuevoConsecutivo;
+        } else {
+            console.log("El documento consecutivoTicket no existe. Inicializando...");
+            // Si no existe, inicializar el consecutivo en Firestore
+            await setDoc(consecutivoRef, { consecutivo: 1 });
+            return 1;
+        }
+    } catch (error) {
+        console.error("Error al obtener el consecutivo:", error);
+        throw error;
+    }
+}
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
+    // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
         const password = prompt("Ingrese su contraseña:");
 
         try {
-            // Autenticación del administrador
             await signInWithEmailAndPassword(auth, email, password);
-
-            // Mostrar la interfaz del administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
 
-            // Restablecer variables globales y cargar el tablero
             lastVisible = null;
             firstVisible = null;
             await cargarPagina(true, "next");
-
-            // Configuración predeterminada de los filtros de KPI
-            const defaultMes = new Date().getMonth() + 1; // Mes actual
-            const defaultAnio = new Date().getFullYear(); // Año actual
-            document.getElementById("kpiMes").value = defaultMes;
-            document.getElementById("kpiAnio").value = defaultAnio;
-
-            // Cargar estadísticas y KPI
-            cargarEstadisticas();
-            calcularKpiMensual();
         } catch (error) {
             console.error("Error de autenticación:", error);
-            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+            alert("Credenciales incorrectas. Intente nuevamente.");
         }
     });
 
+    // Acceso para usuario
     document.getElementById("userLogin")?.addEventListener("click", () => {
-        // Mostrar la interfaz de usuario
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
 
-        // Restablecer variables globales y cargar el tablero
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
+    // Botón para regresar desde usuario
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de usuario
         document.getElementById("userInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
 
+    // Botón para regresar desde administrador
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
-        
-// Manejador para el envío de tickets por el usuario
- // Manejador para el envío de tickets por el usuario
+    });
+    // Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
@@ -239,10 +283,9 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     }
 });
 
-
         // Cerrar sesión del administrador
         auth.signOut();
-    });
+  
 
     // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
@@ -319,6 +362,23 @@ async function actualizarTicket(ticketId) {
         console.error("Error al actualizar el ticket: ", error);
     }
 }
+// función eliminarTicket
+async function eliminarTicket(ticketId) {
+    try {
+        const confirmacion = confirm("¿Estás seguro de que deseas eliminar este ticket?");
+        if (!confirmacion) return;
+
+        // Eliminar el documento del ticket en la base de datos
+        await deleteDoc(doc(db, "tickets", ticketId));
+
+        alert("Ticket eliminado con éxito.");
+        cargarPagina(true, "next"); // Recargar la tabla
+    } catch (error) {
+        console.error("Error al eliminar el ticket: ", error);
+        alert("Hubo un problema al intentar eliminar el ticket.");
+    }
+}
+
 
 // Cargar estadísticas del administrador
 function cargarEstadisticas() {
@@ -398,6 +458,7 @@ function activarActualizacionEnTiempoReal(isAdmin) {
         });
     });
 }
+
 
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
