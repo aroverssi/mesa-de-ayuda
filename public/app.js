@@ -1,4 +1,4 @@
-// Importar las funciones necesarias desde el SDK de Firebase
+/ Importar las funciones necesarias desde el SDK de Firebase
 import { 
     initializeApp 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -46,6 +46,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+
 
 // Variables para paginación
 let lastVisible = null;
@@ -148,6 +150,7 @@ async function cargarPagina(isAdmin, direction = "next") {
         console.error("Error al cargar la página:", error);
     }
 }
+// obtener consecutivo
 async function obtenerConsecutivo() {
     const consecutivoRef = doc(db, "config", "consecutivoTicket");
     try {
@@ -156,11 +159,15 @@ async function obtenerConsecutivo() {
             const data = docSnap.data();
             const nuevoConsecutivo = data.consecutivo + 1;
 
+            console.log("Consecutivo actual:", data.consecutivo);
+            console.log("Nuevo consecutivo actualizado:", nuevoConsecutivo);
+
             // Incrementar el valor del consecutivo en Firestore
             await updateDoc(consecutivoRef, { consecutivo: nuevoConsecutivo });
 
             return nuevoConsecutivo;
         } else {
+            console.log("El documento consecutivoTicket no existe. Inicializando...");
             // Si no existe, inicializar el consecutivo en Firestore
             await setDoc(consecutivoRef, { consecutivo: 1 });
             return 1;
@@ -170,65 +177,49 @@ async function obtenerConsecutivo() {
         throw error;
     }
 }
-
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
+    // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
         const password = prompt("Ingrese su contraseña:");
 
         try {
-            // Autenticación del administrador
             await signInWithEmailAndPassword(auth, email, password);
-
-            // Mostrar la interfaz del administrador
             document.getElementById("roleSelection").style.display = "none";
             document.getElementById("adminInterface").style.display = "block";
 
-            // Restablecer variables globales y cargar el tablero
             lastVisible = null;
             firstVisible = null;
             await cargarPagina(true, "next");
-
-            // Configuración predeterminada de los filtros de KPI
-            const defaultMes = new Date().getMonth() + 1; // Mes actual
-            const defaultAnio = new Date().getFullYear(); // Año actual
-            document.getElementById("kpiMes").value = defaultMes;
-            document.getElementById("kpiAnio").value = defaultAnio;
-
-            // Cargar estadísticas y KPI
-            cargarEstadisticas();
-            calcularKpiMensual();
         } catch (error) {
             console.error("Error de autenticación:", error);
-            alert("Credenciales incorrectas. Por favor, intente de nuevo.");
+            alert("Credenciales incorrectas. Intente nuevamente.");
         }
     });
 
+    // Acceso para usuario
     document.getElementById("userLogin")?.addEventListener("click", () => {
-        // Mostrar la interfaz de usuario
         document.getElementById("roleSelection").style.display = "none";
         document.getElementById("userInterface").style.display = "block";
 
-        // Restablecer variables globales y cargar el tablero
         lastVisible = null;
         firstVisible = null;
         cargarPagina(false, "next");
     });
 
+    // Botón para regresar desde usuario
     document.getElementById("backToUserRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de usuario
         document.getElementById("userInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
     });
 
+    // Botón para regresar desde administrador
     document.getElementById("backToAdminRoleSelection")?.addEventListener("click", () => {
-        // Regresar a la selección de rol desde la interfaz de administrador
         document.getElementById("adminInterface").style.display = "none";
         document.getElementById("roleSelection").style.display = "block";
-        
-// Manejador para el envío de tickets por el usuario
-
+    });
+    // Manejador para el envío de tickets por el usuario
 document.getElementById("ticketForm")?.addEventListener("submit", async (event) => {
     event.preventDefault(); // Evitar recargar la página
 
@@ -239,6 +230,8 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     const descripcion = document.getElementById("descripcion").value.trim();
     const teamviewerId = document.getElementById("teamviewer_id").value.trim();
     const password = document.getElementById("password").value.trim();
+
+    console.log("Datos del formulario:", { usuario, company, email, descripcion });
 
     // Validar campos obligatorios
     if (!usuario || !company || !email || !descripcion) {
@@ -254,30 +247,34 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
             return;
         }
 
+        console.log("Validación de correo pasada.");
+
         // Obtener el consecutivo del ticket
         const consecutivo = await obtenerConsecutivo();
+        console.log("Consecutivo obtenido:", consecutivo);
 
         // Crear un ticket en Firestore
-        await addDoc(collection(db, "tickets"), {
-            consecutivo, // Añadir el consecutivo al ticket
+        const nuevoTicket = await addDoc(collection(db, "tickets"), {
+            consecutivo,
             usuario,
             company,
             email,
             descripcion,
-            teamviewerId: teamviewerId || null, // Asignar null si no se proporciona
+            teamviewerId: teamviewerId || null,
             password: password || null,
             estado: "pendiente",
             fechaApertura: new Date(),
         });
 
+        console.log("Ticket creado con éxito:", nuevoTicket.id);
+
         alert(`¡Ticket enviado con éxito! Número de Ticket: ${consecutivo}`);
-        
+
         // Restablecer formulario después del envío
         document.getElementById("ticketForm").reset();
     } catch (error) {
         console.error("Error al enviar el ticket:", error);
 
-        // Mostrar un mensaje de error según el tipo de problema
         if (error.code === "permission-denied") {
             alert("No tiene permiso para enviar tickets. Por favor, contacte al administrador.");
         } else {
@@ -286,11 +283,9 @@ document.getElementById("ticketForm")?.addEventListener("submit", async (event) 
     }
 });
 
-
-
         // Cerrar sesión del administrador
         auth.signOut();
-    });
+  
 
     // Configuración de eventos para la paginación
     document.getElementById("nextPageUser")?.addEventListener("click", () => cargarPagina(false, "next"));
@@ -465,7 +460,7 @@ function activarActualizacionEnTiempoReal(isAdmin) {
 }
 
 // Función para calcular y mostrar el KPI mensual
-function calcularKpiMensual() {
+async function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiCerrados = document.getElementById("kpiCerrados");
     const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion");
@@ -530,6 +525,7 @@ function calcularKpiMensual() {
     );
 }
 
+
 // Función para descargar el KPI en PDF
 function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
@@ -572,6 +568,8 @@ window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
 window.eliminarTicket = eliminarTicket;
+
+
 
 
 
