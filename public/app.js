@@ -29,8 +29,6 @@ import {
     signInWithEmailAndPassword 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-
-
 // Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCEy2BMfHoUk6-BPom5b7f-HThC8zDW95o",
@@ -46,8 +44,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-
 
 // Variables para paginación
 let lastVisible = null;
@@ -459,7 +455,6 @@ function activarActualizacionEnTiempoReal(isAdmin) {
     });
 }
 
-
 // Función para calcular y mostrar el KPI mensual
 function calcularKpiMensual() {
     const kpiTotal = document.getElementById("kpiTotal");
@@ -567,11 +562,7 @@ function descargarKpiPdf() {
 window.actualizarTicket = actualizarTicket;
 window.cargarPagina = cargarPagina;
 window.descargarKpiPdf = descargarKpiPdf;
-
-
-
-
-
+window.eliminarTicket = eliminarTicket;
 
 
 
