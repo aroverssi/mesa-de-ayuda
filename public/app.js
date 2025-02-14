@@ -183,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("kpiMes").value = mesActual.toString();
     document.getElementById("kpiAnio").value = anioActual.toString();
 
-    calcularKpiMensual(); // Calcular KPI al cargar la página
 
     // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
@@ -199,7 +198,11 @@ document.addEventListener("DOMContentLoaded", () => {
             firstVisible = null;
             await cargarPagina(true, "next");
             cargarEstadisticas(); // Llamar la función para cargar estadísticas
-            calcularKpiMensual();  // Llamar la función para calcular el KPI nuevamente con los valores seleccionados (si es necesario)
+            
+            // Asegurarse de que hay valores seleccionados antes de calcular el KPI
+            if (document.getElementById("kpiMes").value && document.getElementById("kpiAnio").value && document.getElementById("kpiCompany").value) {
+                calcularKpiMensual();  // Calcular el KPI solo si se seleccionan mes, año y compañía
+            }
         } catch (error) {
             console.error("Error de autenticación:", error);
             alert("Credenciales incorrectas. Intente nuevamente.");
