@@ -439,10 +439,11 @@ function calcularKpiMensual() {
 
     const mesSeleccionado = parseInt(document.getElementById("kpiMes")?.value);
     const anioSeleccionado = parseInt(document.getElementById("kpiAnio")?.value);
+    const companiaSeleccionada = document.getElementById("kpiCompany")?.value;
 
-    // Validar si el mes y año fueron seleccionados correctamente
-    if (isNaN(mesSeleccionado) || isNaN(anioSeleccionado)) {
-        alert("Por favor selecciona un mes y un año válidos.");
+    // Validar si el mes, año y compañía fueron seleccionados correctamente
+    if (isNaN(mesSeleccionado) || isNaN(anioSeleccionado) || !companiaSeleccionada) {
+        alert("Por favor selecciona un mes, un año y una compañía válidos.");
         return; // Termina la función si no se seleccionaron valores válidos
     }
 
@@ -457,7 +458,8 @@ function calcularKpiMensual() {
         query(
             collection(db, "tickets"),
             where("fechaApertura", ">=", inicioMes),
-            where("fechaApertura", "<=", finMes)
+            where("fechaApertura", "<=", finMes),
+            where("company", "==", companiaSeleccionada)
         ),
         (snapshot) => {
             totalTickets = snapshot.size;
@@ -504,9 +506,10 @@ function descargarKpiPdf() {
 
     const mesSeleccionado = document.getElementById("kpiMes")?.value || "N/A";
     const anioSeleccionado = document.getElementById("kpiAnio")?.value || "N/A";
+    const companiaSeleccionada = document.getElementById("kpiCompany")?.value || "N/A";
 
-    if (mesSeleccionado === "N/A" || anioSeleccionado === "N/A") {
-        alert("Por favor selecciona un mes y un año para el reporte.");
+    if (mesSeleccionado === "N/A" || anioSeleccionado === "N/A" || companiaSeleccionada === "N/A") {
+        alert("Por favor selecciona un mes, un año y una compañía para el reporte.");
         return;
     }
 
@@ -521,18 +524,20 @@ function descargarKpiPdf() {
     pdf.setFontSize(12);
     pdf.text(`Mes: ${mesSeleccionado}`, 10, 20);
     pdf.text(`Año: ${anioSeleccionado}`, 10, 30);
-    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 40);
-    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 50);
-    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 60);
-    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 70);
+    pdf.text(`Compañía: ${companiaSeleccionada}`, 10, 40);
+    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 50);
+    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 60);
+    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 70);
+    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 80);
 
     // Descargar el archivo PDF
-    pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}.pdf`);
+    pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
 }
 
-// Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes o año sean activos
+// Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes, año o compañía sean activos
 document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
 document.getElementById("kpiAnio")?.addEventListener("change", calcularKpiMensual);
+document.getElementById("kpiCompany")?.addEventListener("change", calcularKpiMensual);
 
 // Exportar funciones globales para acceso desde el HTML
 window.actualizarTicket = actualizarTicket;
