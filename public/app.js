@@ -512,15 +512,10 @@ function calcularKpiMensual() {
     );
 }
 
-
 // Función para descargar el KPI en PDF
 async function descargarKpiPdf() {
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-    });
+    const pdf = new jsPDF();
 
     const mesSeleccionado = document.getElementById("kpiMes").value;
     const anioSeleccionado = document.getElementById("kpiAnio").value;
@@ -543,33 +538,63 @@ async function descargarKpiPdf() {
 
     const snapshot = await getDocs(consulta);
 
+    // Configurar la cabecera del PDF
     pdf.setFontSize(16);
-    pdf.text(`Reporte Mensual de Tickets`, 10, 10);
+    pdf.text(`Reporte Mensual de KPI`, 10, 10);
     pdf.setFontSize(12);
     pdf.text(`Mes: ${mesSeleccionado} - Año: ${anioSeleccionado} - Compañía: ${companiaSeleccionada}`, 10, 20);
     pdf.text(`Total de Tickets: ${snapshot.size}`, 10, 30);
 
-    let y = 40;
+    let y = 40; // Posición vertical inicial para los tickets
 
     snapshot.forEach(doc => {
-        if (y >= 280) {
-            pdf.addPage();
-            y = 10;
-        }
-
         const ticket = doc.data();
-        pdf.setFontSize(11);
         pdf.text(`Ticket ${ticket.consecutivo} - Usuario: ${ticket.usuario} - Estado: ${ticket.estado}`, 10, y);
-        y += 6;
-        pdf.text(`Correo: ${ticket.email}`, 10, y);
-        y += 6;
-        pdf.text(`Fecha de Inicio: ${ticket.fechaApertura.toDate().toLocaleString()}`, 10, y);
-        y += 6;
-        pdf.text(`Fecha de Resolución: ${ticket.fechaCierre ? ticket.fechaCierre.toDate().toLocaleString() : "Pendiente"}`, 10, y);
         y += 10;
+        pdf.text(`Correo: ${ticket.email}`, 10, y);
+        y += 10;
+        pdf.text(`Fecha de Inicio: ${ticket.fechaApertura.toDate().toLocaleString()}`, 10, y);
+        y += 10;
+        if (ticket.estado === "cerrado") {
+            pdf.text(`Fecha de Resolución: ${ticket.fechaCierre.toDate().toLocaleString()}`, 10, y);
+            y += 10;
+        } else {
+            pdf.text(`Fecha de Resolución: No resuelto aún`, 10, y);
+            y += 10;
+        }
     });
 
+    // Añadir resumen al final del PDF
+    pdf.setFontSize(14);
+    pdf.text(`Resumen del Mes:`, 10, y);
+    y += 10;
+    pdf.setFontSize(12);
+    pdf.text(`Tickets Abiertos: ${snapshot.size - snapshot.docs.filter(doc => doc.data().estado === "cerrado").length}`, 10, y);
+    y += 10;
+    pdf.text(`Tickets Cerrados: ${snapshot.docs.filter(doc => doc.data().estado === "cerrado").length}`, 10, y);
+    y += 10;
+    pdf.text(`Promedio de Resolución (horas): ${calculateAverageResolutionTime(snapshot)}`, 10, y);
+    y += 10;
+    pdf.text(`% de Tickets Cerrados: ${calculateClosurePercentage(snapshot)}%`, 10, y);
+
+    // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
+}
+
+function calculateAverageResolutionTime(snapshot) {
+    const resolvedTickets = snapshot.docs.filter(doc => doc.data().estado === "cerrado" && doc.data().fechaCierre);
+    const totalResolutionTime = resolvedTickets.reduce((total, doc) => {
+        const ticket = doc.data();
+        const resolutionTime = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+        return total + resolutionTime;
+    }, 0);
+    return (totalResolutionTime / resolvedTickets.length).toFixed(2);
+}
+
+function calculateClosurePercentage(snapshot) {
+    const totalTickets = snapshot.size;
+    const closedTickets = snapshot.docs.filter(doc => doc.data().estado === "cerrado").length;
+    return ((closedTickets / totalTickets) * 100).toFixed(2);
 }
 
 
