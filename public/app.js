@@ -511,7 +511,7 @@ function calcularKpiMensual() {
 
 //  Función para descargar el KPI en PDF
 async function descargarKpiPdf() {
-    const { jsPDF } = window.jspdf; // Librería para generar PDFs
+    const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
 
     const mesSeleccionado = document.getElementById("kpiMes").value;
@@ -524,19 +524,17 @@ async function descargarKpiPdf() {
     }
 
     const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0, 23, 59, 59); // Hasta el final del mes
 
     const consulta = query(
         collection(db, "tickets"),
         where("fechaApertura", ">=", inicioMes),
         where("fechaApertura", "<=", finMes),
-        where("company", "==", companiaSeleccionada),
-        where("estado", "==", "cerrado")
+        where("company", "==", companiaSeleccionada)
     );
 
     const snapshot = await getDocs(consulta);
 
-    // Configurar la cabecera del PDF
     pdf.setFontSize(16);
     pdf.text(`Reporte Mensual de KPI`, 10, 10);
     pdf.setFontSize(12);
@@ -547,19 +545,21 @@ async function descargarKpiPdf() {
 
     snapshot.forEach(doc => {
         const ticket = doc.data();
+        pdf.setFontSize(11);
         pdf.text(`Ticket ${ticket.consecutivo} - Usuario: ${ticket.usuario} - Estado: ${ticket.estado}`, 10, y);
-        y += 10;
-        pdf.text(`Correo: ${ticket.email} - Descripción: ${ticket.descripcion}`, 10, y);
-        y += 10;
+        y += 6;
+        pdf.text(`Correo: ${ticket.email}`, 10, y);
+        y += 6;
         pdf.text(`Fecha de Inicio: ${ticket.fechaApertura.toDate().toLocaleString()}`, 10, y);
-        y += 10;
-        pdf.text(`Fecha de Resolución: ${ticket.fechaCierre.toDate().toLocaleString()}`, 10, y);
-        y += 10;
+        y += 6;
+        pdf.text(`Fecha de Resolución: ${ticket.fechaCierre ? ticket.fechaCierre.toDate().toLocaleString() : "No resuelto aún"}`, 10, y);
+        y += 10; // Añade espacio extra antes del próximo ticket
     });
 
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
 }
+
 
 
 // Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes, año o compañía sean activos
