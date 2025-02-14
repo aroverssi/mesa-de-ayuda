@@ -176,6 +176,15 @@ async function obtenerConsecutivo() {
 
 // Manejo de la selección de rol
 document.addEventListener("DOMContentLoaded", () => {
+    // Configurar el mes y año actuales como valores predeterminados
+    const fechaActual = new Date();
+    const mesActual = fechaActual.getMonth() + 1; // getMonth() devuelve 0-11
+    const anioActual = fechaActual.getFullYear();
+    document.getElementById("kpiMes").value = mesActual.toString();
+    document.getElementById("kpiAnio").value = anioActual.toString();
+
+    calcularKpiMensual(); // Calcular KPI al cargar la página
+
     // Login para administrador
     document.getElementById("adminLogin")?.addEventListener("click", async () => {
         const email = prompt("Ingrese su correo de administrador:");
@@ -190,12 +199,13 @@ document.addEventListener("DOMContentLoaded", () => {
             firstVisible = null;
             await cargarPagina(true, "next");
             cargarEstadisticas(); // Llamar la función para cargar estadísticas
-            calcularKpiMensual();  // Llamar la función para calcular el KPI
+            calcularKpiMensual();  // Llamar la función para calcular el KPI nuevamente con los valores seleccionados (si es necesario)
         } catch (error) {
             console.error("Error de autenticación:", error);
             alert("Credenciales incorrectas. Intente nuevamente.");
         }
     });
+
 
     // Acceso para usuario
     document.getElementById("userLogin")?.addEventListener("click", () => {
@@ -499,39 +509,57 @@ function calcularKpiMensual() {
     );
 }
 
-// Función para descargar el KPI en PDF
-function descargarKpiPdf() {
+/ Función para descargar el KPI en PDF
+async function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
     const pdf = new jsPDF();
 
-    const mesSeleccionado = document.getElementById("kpiMes")?.value || "N/A";
-    const anioSeleccionado = document.getElementById("kpiAnio")?.value || "N/A";
-    const companiaSeleccionada = document.getElementById("kpiCompany")?.value || "N/A";
+    const mesSeleccionado = document.getElementById("kpiMes").value;
+    const anioSeleccionado = document.getElementById("kpiAnio").value;
+    const companiaSeleccionada = document.getElementById("kpiCompany").value;
 
-    if (mesSeleccionado === "N/A" || anioSeleccionado === "N/A" || companiaSeleccionada === "N/A") {
+    if (!mesSeleccionado || !anioSeleccionado || !companiaSeleccionada) {
         alert("Por favor selecciona un mes, un año y una compañía para el reporte.");
         return;
     }
 
-    const kpiTotal = document.getElementById("kpiTotal")?.textContent || "N/A";
-    const kpiCerrados = document.getElementById("kpiCerrados")?.textContent || "N/A";
-    const kpiPromedioResolucion = document.getElementById("kpiPromedioResolucion")?.textContent || "N/A";
-    const kpiPorcentajeCerrados = document.getElementById("kpiPorcentajeCerrados")?.textContent || "N/A";
+    const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
 
-    // Generar el contenido del PDF
+    const consulta = query(
+        collection(db, "tickets"),
+        where("fechaApertura", ">=", inicioMes),
+        where("fechaApertura", "<=", finMes),
+        where("company", "==", companiaSeleccionada),
+        where("estado", "==", "cerrado")
+    );
+
+    const snapshot = await getDocs(consulta);
+
+    // Configurar la cabecera del PDF
     pdf.setFontSize(16);
     pdf.text(`Reporte Mensual de KPI`, 10, 10);
     pdf.setFontSize(12);
-    pdf.text(`Mes: ${mesSeleccionado}`, 10, 20);
-    pdf.text(`Año: ${anioSeleccionado}`, 10, 30);
-    pdf.text(`Compañía: ${companiaSeleccionada}`, 10, 40);
-    pdf.text(`Total de Tickets: ${kpiTotal}`, 10, 50);
-    pdf.text(`Tickets Cerrados: ${kpiCerrados}`, 10, 60);
-    pdf.text(`Promedio de Resolución (horas): ${kpiPromedioResolucion}`, 10, 70);
-    pdf.text(`% de Tickets Cerrados: ${kpiPorcentajeCerrados}`, 10, 80);
+    pdf.text(`Mes: ${mesSeleccionado} - Año: ${anioSeleccionado} - Compañía: ${companiaSeleccionada}`, 10, 20);
+    pdf.text(`Total de Tickets: ${snapshot.size}`, 10, 30);
+
+    let y = 40; // Posición vertical inicial para los tickets
+
+    snapshot.forEach(doc => {
+        const ticket = doc.data();
+        pdf.text(`Ticket ${ticket.consecutivo} - Usuario: ${ticket.usuario} - Estado: ${ticket.estado}`, 10, y);
+        y += 10;
+        pdf.text(`Correo: ${ticket.email} - Descripción: ${ticket.descripcion}`, 10, y);
+        y += 10;
+        pdf.text(`Fecha de Inicio: ${ticket.fechaApertura.toDate().toLocaleString()}`, 10, y);
+        y += 10;
+        pdf.text(`Fecha de Resolución: ${ticket.fechaCierre.toDate().toLocaleString()}`, 10, y);
+        y += 10;
+    });
 
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
+}
 }
 
 // Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes, año o compañía sean activos
