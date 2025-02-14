@@ -560,7 +560,7 @@ async function descargarKpiPdf() {
     // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
 }
-}
+
 
 // Asegurarse de que los eventos de recalcular el KPI cuando cambian los campos de mes, año o compañía sean activos
 document.getElementById("kpiMes")?.addEventListener("change", calcularKpiMensual);
