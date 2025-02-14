@@ -512,9 +512,10 @@ function calcularKpiMensual() {
     );
 }
 
-//  Función para descargar el KPI en PDF
+
+// Función para descargar el KPI en PDF
 async function descargarKpiPdf() {
-    const { jsPDF } = window.jspdf;
+    const { jsPDF } = window.jspdf; // Librería para generar PDFs
     const pdf = new jsPDF();
 
     const mesSeleccionado = document.getElementById("kpiMes").value;
@@ -527,7 +528,7 @@ async function descargarKpiPdf() {
     }
 
     const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0, 23, 59);
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0);
 
     const consulta = query(
         collection(db, "tickets"),
@@ -538,48 +539,36 @@ async function descargarKpiPdf() {
 
     const snapshot = await getDocs(consulta);
 
-    let totalTickets = snapshot.size;
-    let ticketsCerrados = 0;
-    let sumaResolucion = 0;
-
-    snapshot.forEach(doc => {
-        const ticket = doc.data();
-        if (ticket.estado === "cerrado" && ticket.fechaCierre) {
-            ticketsCerrados++;
-            const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
-            sumaResolucion += tiempoResolucion;
-        }
-    });
-
-    const promedioResolucion = ticketsCerrados > 0 ? (sumaResolucion / ticketsCerrados).toFixed(2) : 0;
-    const porcentajeCerrados = totalTickets > 0 ? ((ticketsCerrados / totalTickets) * 100).toFixed(2) : 0;
-
+    // Configurar la cabecera del PDF
     pdf.setFontSize(16);
     pdf.text(`Reporte Mensual de KPI`, 10, 10);
     pdf.setFontSize(12);
     pdf.text(`Mes: ${mesSeleccionado} - Año: ${anioSeleccionado} - Compañía: ${companiaSeleccionada}`, 10, 20);
-    pdf.text(`Total de Tickets: ${totalTickets}`, 10, 30);
-    pdf.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 40);
-    pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 50);
-    pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 60);
+    pdf.text(`Total de Tickets: ${snapshot.size}`, 10, 30);
 
-    let y = 70; // Posición vertical inicial para los tickets
+    let y = 40; // Posición vertical inicial para los tickets
 
     snapshot.forEach(doc => {
         const ticket = doc.data();
-        pdf.setFontSize(11);
         pdf.text(`Ticket ${ticket.consecutivo} - Usuario: ${ticket.usuario} - Estado: ${ticket.estado}`, 10, y);
-        y += 6;
+        y += 10;
         pdf.text(`Correo: ${ticket.email}`, 10, y);
-        y += 6;
+        y += 10;
         pdf.text(`Fecha de Inicio: ${ticket.fechaApertura.toDate().toLocaleString()}`, 10, y);
-        y += 6;
-        pdf.text(`Fecha de Resolución: ${ticket.fechaCierre ? ticket.fechaCierre.toDate().toLocaleString() : "No resuelto aún"}`, 10, y);
-        y += 10; // Añade espacio extra antes del próximo ticket
+        y += 10;
+        if (ticket.estado === "cerrado") {
+            pdf.text(`Fecha de Resolución: ${ticket.fechaCierre.toDate().toLocaleString()}`, 10, y);
+            y += 10;
+        } else {
+            pdf.text(`Fecha de Resolución: Pendiente`, 10, y);
+            y += 10;
+        }
     });
 
+    // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
 }
+
 
 
 
