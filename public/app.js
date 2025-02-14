@@ -524,7 +524,7 @@ async function descargarKpiPdf() {
     }
 
     const inicioMes = new Date(anioSeleccionado, mesSeleccionado - 1, 1);
-    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0, 23, 59, 59); // Hasta el final del mes
+    const finMes = new Date(anioSeleccionado, mesSeleccionado, 0, 23, 59);
 
     const consulta = query(
         collection(db, "tickets"),
@@ -535,13 +535,32 @@ async function descargarKpiPdf() {
 
     const snapshot = await getDocs(consulta);
 
+    let totalTickets = snapshot.size;
+    let ticketsCerrados = 0;
+    let sumaResolucion = 0;
+
+    snapshot.forEach(doc => {
+        const ticket = doc.data();
+        if (ticket.estado === "cerrado" && ticket.fechaCierre) {
+            ticketsCerrados++;
+            const tiempoResolucion = (ticket.fechaCierre.seconds - ticket.fechaApertura.seconds) / 3600;
+            sumaResolucion += tiempoResolucion;
+        }
+    });
+
+    const promedioResolucion = ticketsCerrados > 0 ? (sumaResolucion / ticketsCerrados).toFixed(2) : 0;
+    const porcentajeCerrados = totalTickets > 0 ? ((ticketsCerrados / totalTickets) * 100).toFixed(2) : 0;
+
     pdf.setFontSize(16);
     pdf.text(`Reporte Mensual de KPI`, 10, 10);
     pdf.setFontSize(12);
     pdf.text(`Mes: ${mesSeleccionado} - Año: ${anioSeleccionado} - Compañía: ${companiaSeleccionada}`, 10, 20);
-    pdf.text(`Total de Tickets: ${snapshot.size}`, 10, 30);
+    pdf.text(`Total de Tickets: ${totalTickets}`, 10, 30);
+    pdf.text(`Tickets Cerrados: ${ticketsCerrados}`, 10, 40);
+    pdf.text(`Promedio de Resolución (horas): ${promedioResolucion}`, 10, 50);
+    pdf.text(`% de Tickets Cerrados: ${porcentajeCerrados}`, 10, 60);
 
-    let y = 40; // Posición vertical inicial para los tickets
+    let y = 70; // Posición vertical inicial para los tickets
 
     snapshot.forEach(doc => {
         const ticket = doc.data();
@@ -556,9 +575,9 @@ async function descargarKpiPdf() {
         y += 10; // Añade espacio extra antes del próximo ticket
     });
 
-    // Descargar el archivo PDF
     pdf.save(`Reporte_KPI_${mesSeleccionado}_${anioSeleccionado}_${companiaSeleccionada}.pdf`);
 }
+
 
 
 
