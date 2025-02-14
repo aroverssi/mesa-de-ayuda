@@ -509,7 +509,7 @@ function calcularKpiMensual() {
     );
 }
 
-/ Función para descargar el KPI en PDF
+//  Función para descargar el KPI en PDF
 async function descargarKpiPdf() {
     const { jsPDF } = window.jspdf; // Librería para generar PDFs
     const pdf = new jsPDF();
