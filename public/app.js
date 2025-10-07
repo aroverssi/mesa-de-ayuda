@@ -49,13 +49,63 @@ const auth = getAuth(app);
 let lastVisible = null;
 let firstVisible = null;
 
+// Utilidades para formato y presentación en tablas
+function sanitizeText(text) {
+    if (text === undefined || text === null) {
+        return "";
+    }
+    return text
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function formatMultilineText(text) {
+    return sanitizeText(text).replace(/\n/g, "<br>");
+}
+
+function renderStatusBadge(status) {
+    const normalizedStatus = (status || "").toString().toLowerCase();
+    const statusClassMap = {
+        pendiente: "status-pendiente",
+        "en proceso": "status-en-proceso",
+        cerrado: "status-cerrado",
+    };
+
+    const className = statusClassMap[normalizedStatus] || "status-default";
+    const label = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Sin estado";
+    return `<span class="status-badge ${className}">${sanitizeText(label)}</span>`;
+}
+
+function formatDate(value, fallback = "En progreso") {
+    if (!value) {
+        return fallback;
+    }
+
+    try {
+        if (typeof value.toDate === "function") {
+            return value.toDate().toLocaleString();
+        }
+        if (typeof value.seconds === "number") {
+            return new Date(value.seconds * 1000).toLocaleString();
+        }
+        return new Date(value).toLocaleString();
+    } catch (error) {
+        console.warn("No se pudo formatear la fecha", error);
+        return fallback;
+    }
+}
+
 // Función para cargar tickets con filtros y paginación
 async function cargarPagina(isAdmin, direction = "next") {
     const ticketTable = isAdmin
         ? document.getElementById("ticketTableAdmin").getElementsByTagName("tbody")[0]
         : document.getElementById("ticketTableUser").getElementsByTagName("tbody")[0];
 
-    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">Cargando...</td></tr>`;
+    ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 13 : 7}" class="text-center">Cargando...</td></tr>`;
 
     const estadoFiltro = document.getElementById(isAdmin ? "adminFilterStatus" : "userFilterStatus")?.value || "";
     const companyFiltro = document.getElementById(isAdmin ? "adminFilterCompany" : "userFilterCompany")?.value || "";
@@ -95,41 +145,54 @@ async function cargarPagina(isAdmin, direction = "next") {
                 const ticket = doc.data();
                 const row = document.createElement("tr");
 
-               row.innerHTML = isAdmin
-    ? `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.teamviewerId || "N/A"}</td>
-        <td>${ticket.password || "N/A"}</td>
-        <td>${ticket.estado}</td>
-        <td>${new Date(ticket.fechaApertura.seconds * 1000).toLocaleString()}</td>
-        <td>${ticket.fechaCierre ? new Date(ticket.fechaCierre.seconds * 1000).toLocaleString() : "En progreso"}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-        <td>
-            <select id="estadoSelect_${doc.id}">
-                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
-                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
-                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
-            </select>
-            <input type="text" id="comentarios_${doc.id}" value="${ticket.comentarios || ""}" placeholder="Agregar comentario">
-            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
-        </td>
-        <td>
-            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
-        </td>
-    `
-    : `
-        <td>${ticket.consecutivo}</td>
-        <td>${ticket.usuario}</td>
-        <td>${ticket.company}</td>
-        <td>${ticket.email}</td>
-        <td>${ticket.descripcion}</td>
-        <td>${ticket.estado}</td>
-        <td>${ticket.comentarios || "Sin comentarios"}</td>
-    `;
+                const consecutivo = sanitizeText(ticket.consecutivo ?? "");
+                const usuario = sanitizeText(ticket.usuario ?? "");
+                const company = sanitizeText(ticket.company ?? "");
+                const email = sanitizeText(ticket.email ?? "");
+                const descripcion = formatMultilineText(ticket.descripcion ?? "Sin descripción");
+                const teamviewerId = sanitizeText(ticket.teamviewerId ?? "N/A");
+                const password = sanitizeText(ticket.password ?? "N/A");
+                const comentarios = formatMultilineText(ticket.comentarios ?? "Sin comentarios");
+                const comentariosValue = sanitizeText(ticket.comentarios ?? "");
+                const estadoBadge = renderStatusBadge(ticket.estado);
+                const fechaInicio = formatDate(ticket.fechaApertura, "Sin registro");
+                const fechaCierre = ticket.fechaCierre ? formatDate(ticket.fechaCierre, "En progreso") : "En progreso";
+
+                row.innerHTML = isAdmin
+                    ? `
+                        <td>${consecutivo}</td>
+                        <td>${usuario}</td>
+                        <td>${company}</td>
+                        <td>${email}</td>
+                        <td>${descripcion}</td>
+                        <td>${teamviewerId}</td>
+                        <td>${password}</td>
+                        <td>${estadoBadge}</td>
+                        <td>${sanitizeText(fechaInicio)}</td>
+                        <td>${sanitizeText(fechaCierre)}</td>
+                        <td>${comentarios}</td>
+                        <td class="table-actions">
+                            <select id="estadoSelect_${doc.id}" class="form-control form-control-sm">
+                                <option value="pendiente" ${ticket.estado === "pendiente" ? "selected" : ""}>Pendiente</option>
+                                <option value="en proceso" ${ticket.estado === "en proceso" ? "selected" : ""}>En Proceso</option>
+                                <option value="cerrado" ${ticket.estado === "cerrado" ? "selected" : ""}>Cerrado</option>
+                            </select>
+                            <input type="text" id="comentarios_${doc.id}" class="form-control form-control-sm mt-2" value="${comentariosValue}" placeholder="Agregar comentario">
+                            <button class="btn btn-sm btn-primary mt-2" onclick="actualizarTicket('${doc.id}')">Actualizar</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-danger mt-2" onclick="eliminarTicket('${doc.id}')">Eliminar</button>
+                        </td>
+                    `
+                    : `
+                        <td>${consecutivo}</td>
+                        <td>${usuario}</td>
+                        <td>${company}</td>
+                        <td>${email}</td>
+                        <td>${descripcion}</td>
+                        <td>${estadoBadge}</td>
+                        <td>${comentarios}</td>
+                    `;
 
                 ticketTable.appendChild(row);
             });
@@ -137,7 +200,7 @@ async function cargarPagina(isAdmin, direction = "next") {
             document.getElementById(isAdmin ? "nextPageAdmin" : "nextPageUser").disabled = snapshot.docs.length < 10;
             document.getElementById(isAdmin ? "prevPageAdmin" : "prevPageUser").disabled = direction === "prev" && !firstVisible;
         } else {
-            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 12 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
+            ticketTable.innerHTML = `<tr><td colspan="${isAdmin ? 13 : 7}" class="text-center">No hay más tickets en esta dirección.</td></tr>`;
             lastVisible = null;
             firstVisible = null;
         }
