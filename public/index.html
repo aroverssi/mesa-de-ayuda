@@ -3,12 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mesa de Ayuda </title>
+    <title>Mesa de Ayuda</title>
+
+    <!-- Bootstrap (igual) -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Fuente Inter (solo visual) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tus estilos -->
     <link rel="stylesheet" href="styles.css">
-    <!-- Agregar la librería jsPDF -->
+
+    <!-- jsPDF (igual) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <!-- Tu JS (igual) -->
     <script type="module" src="app.js"></script>
+
+    <!-- Mantengo tu estilo inline existente (opcional/visual) -->
     <style>
         #kpiContainer {
             background-color: #f9f9f9;
@@ -25,217 +39,329 @@
     </style>
 </head>
 <body>
-    <div class="container my-5">
-        <h1 class="text-center mb-4">Mesa de Ayuda</h1>
-
-        <!-- Interfaz de Selección de Rol -->
-        <div id="roleSelection" class="card p-4 shadow-sm mb-5">
-            <h3>Selecciona tu rol</h3>
-            <button id="adminLogin" class="btn btn-primary">Administrador</button>
-            <button id="userLogin" class="btn btn-secondary">Usuario</button>
+    <!-- Hero visual -->
+    <header class="app-hero">
+        <div class="container hero-content">
+            <h1>Mesa de Ayuda Corporativa</h1>
+            <p>Gestiona y da seguimiento a los tickets de soporte tecnológico de manera centralizada.</p>
         </div>
+    </header>
+
+    <!-- Aviso de prioridad -->
+    <section class="priority-banner">
+        <div class="container d-flex align-items-center">
+            <span class="priority-icon" aria-hidden="true">!</span>
+            <p class="mb-0">Los tickets se atenderán conforme la jefatura de TI considere su prioridad.</p>
+        </div>
+    </section>
+
+    <main class="container app-container my-5">
+        <!-- Interfaz de Selección de Rol -->
+        <section id="roleSelection" class="card panel-card shadow-sm mb-5">
+            <div class="card-body text-center">
+                <h2 class="mb-3">Selecciona tu rol</h2>
+                <p class="role-description">Elige la vista que necesitas para gestionar o consultar tickets.</p>
+                <div class="role-actions">
+                    <button id="adminLogin" class="btn btn-primary btn-lg">Administrador</button>
+                    <button id="userLogin" class="btn btn-secondary btn-lg">Usuario</button>
+                </div>
+            </div>
+        </section>
 
         <!-- Interfaz de Usuario -->
-        <div id="userInterface" style="display: none;">
-            <button id="backToUserRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
+        <section id="userInterface" class="interface-section" style="display: none;">
+            <div class="interface-header text-center">
+                <h2>Portal de Usuario</h2>
+                <p>Envía solicitudes de soporte y consulta el estado de tus tickets.</p>
+            </div>
+
+            <div class="text-center mb-4">
+                <button id="backToUserRoleSelection" class="btn btn-outline">Volver a la Selección de Rol</button>
+            </div>
             
             <!-- Formulario de Envío de Ticket -->
-            <div class="card p-4 shadow-sm mb-5">
-                <h3>Enviar un Ticket</h3>
-                <form id="ticketForm" autocomplete="off">
-                    <div class="form-group">
-                        <label for="usuario">Nombre</label>
-                        <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="company">Compañía</label>
-                        <select id="company" class="form-control" required>
-                            <option value="">Seleccione una compañía</option>
-                            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                            <option value="Allpack">Allpack</option>
-                            <option value="Business On Line">Business On Line</option>
-                            <option value="Zona Franca">Zona Franca</option>
-                            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                            <option value="Asocolinas">Asocolinas</option>
-                            <option value="Corrugados Caribenos">Corrugados Caribenos</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Correo Electrónico</label>
-                        <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="descripcion">Descripción del problema</label>
-                        <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
-                        <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Contraseña TeamViewer</label>
-                        <input type="text" id="password" class="form-control" placeholder="Contraseña">
-                    </div>
-                    <button type="submit" id="submitButton" class="btn btn-primary">Enviar Ticket</button>
-                </form>
+            <div class="card panel-card shadow-sm mb-5">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Enviar un Ticket</h3>
+                    <p class="mb-0">Completa los campos para registrar una nueva solicitud de soporte.</p>
+                </div>
+                <div class="card-body">
+                    <form id="ticketForm" autocomplete="off" class="form-layout">
+                        <div class="form-group">
+                            <label for="usuario">Nombre</label>
+                            <input type="text" id="usuario" class="form-control" placeholder="Nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="company">Compañía</label>
+                            <select id="company" class="form-control" required>
+                                <option value="">Seleccione una compañía</option>
+                                <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                                <option value="Allpack">Allpack</option>
+                                <option value="Business On Line">Business On Line</option>
+                                <option value="Zona Franca">Zona Franca</option>
+                                <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                                <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                                <option value="Asocolinas">Asocolinas</option>
+                                <option value="Corrugados Caribenos">Corrugados Caribenos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico</label>
+                            <input type="email" id="email" class="form-control" placeholder="Correo Electrónico" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="descripcion">Descripción del problema</label>
+                            <textarea id="descripcion" class="form-control" placeholder="Describe tu problema" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="teamviewer_id">ID TeamViewer (Opcional)</label>
+                            <input type="text" id="teamviewer_id" class="form-control" placeholder="ID TeamViewer">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña TeamViewer</label>
+                            <input type="text" id="password" class="form-control" placeholder="Contraseña">
+                        </div>
+                        <div class="text-right">
+                            <button type="submit" id="submitButton" class="btn btn-primary">Enviar Ticket</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Filtros para Usuario -->
-            <div class="form-inline mb-3">
-                <select id="userFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="userFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                    <option value="Asocolinas">Asocolinas</option>
-                 <option value="Corrugados Caribenos">Corrugados Caribenos</option>
-                </select>
-                <input type="date" id="userFilterStartDate" class="form-control mr-2">
-                <input type="date" id="userFilterEndDate" class="form-control mr-2">
-                <input type="number" id="userFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
-                <button id="userFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
-                <button id="userFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+            <div class="card panel-card shadow-sm mb-5">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Filtros de búsqueda</h3>
+                    <p class="mb-0">Refina los resultados para localizar tus tickets rápidamente.</p>
+                </div>
+                <div class="card-body">
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label for="userFilterStatus">Estado</label>
+                            <select id="userFilterStatus" class="form-control">
+                                <option value="">Todos los Estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en proceso">En Proceso</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userFilterCompany">Compañía</label>
+                            <select id="userFilterCompany" class="form-control">
+                                <option value="">Todas las Compañías</option>
+                                <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                                <option value="Allpack">Allpack</option>
+                                <option value="Business On Line">Business On Line</option>
+                                <option value="Zona Franca">Zona Franca</option>
+                                <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                                <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                                <option value="Asocolinas">Asocolinas</option>
+                                <option value="Corrugados Caribenos">Corrugados Caribenos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="userFilterStartDate">Fecha inicio</label>
+                            <input type="date" id="userFilterStartDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="userFilterEndDate">Fecha fin</label>
+                            <input type="date" id="userFilterEndDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="userFilterTicket">Número de ticket</label>
+                            <input type="number" id="userFilterTicket" class="form-control" placeholder="Número de Ticket">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="userFilterApply" class="btn btn-primary">Aplicar Filtros</button>
+                        <button id="userFilterClear" class="btn btn-outline">Borrar Filtros</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-between mb-3">
-                <button id="prevPageUser" class="btn btn-secondary">Página Anterior</button>
-                <button id="nextPageUser" class="btn btn-secondary">Página Siguiente</button>
+            <div class="pagination-controls">
+                <button id="prevPageUser" class="btn btn-outline">Página Anterior</button>
+                <button id="nextPageUser" class="btn btn-outline">Página Siguiente</button>
             </div>
 
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableUser">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Compañía</th>
-                        <th>Correo Electrónico</th>
-                        <th>Descripción</th>
-                        <th>Estado</th>
-                        <th>Comentarios</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+            <div class="card table-card shadow-sm">
+                <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Tablero de Tickets</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ticketTableUser">
+                        <thead>
+                            <tr>
+                                <th>Número de Ticket</th>
+                                <th>Usuario</th>
+                                <th>Compañía</th>
+                                <th>Correo Electrónico</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Comentarios</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
         <!-- Interfaz de Administrador -->
-        <div id="adminInterface" style="display: none;">
-            <button id="backToAdminRoleSelection" class="btn btn-secondary mb-3">Volver a la Selección de Rol</button>
-
-            <div class="form-inline mb-3">
-                <select id="adminFilterStatus" class="form-control mr-2">
-                    <option value="">Todos los Estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en proceso">En Proceso</option>
-                    <option value="cerrado">Cerrado</option>
-                </select>
-                <select id="adminFilterCompany" class="form-control mr-2">
-                    <option value="">Todas las Compañías</option>
-                    <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-                    <option value="Allpack">Allpack</option>
-                    <option value="Business On Line">Business On Line</option>
-                    <option value="Zona Franca">Zona Franca</option>
-                    <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-                    <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-                    <option value="Asocolinas">Asocolinas</option>
-                    <option value="Corrugados Caribenos">Corrugados Caribenos</option>
-                </select>
-                <input type="date" id="adminFilterStartDate" class="form-control mr-2">
-                <input type="date" id="adminFilterEndDate" class="form-control mr-2">
-                <input type="number" id="adminFilterTicket" class="form-control mr-2" placeholder="Número de Ticket">
-                <button id="adminFilterApply" class="btn btn-primary mr-2">Aplicar Filtros</button>
-                <button id="adminFilterClear" class="btn btn-secondary">Borrar Filtros</button>
+        <section id="adminInterface" class="interface-section" style="display: none;">
+            <div class="interface-header text-center">
+                <h2>Panel del Administrador</h2>
+                <p>Consulta métricas, actualiza estados y administra los tickets en curso.</p>
             </div>
 
-            <div class="d-flex justify-content-between mb-3">
-                <button id="prevPageAdmin" class="btn btn-secondary">Página Anterior</button>
-                <button id="nextPageAdmin" class="btn btn-secondary">Página Siguiente</button>
+            <div class="text-center mb-4">
+                <button id="backToAdminRoleSelection" class="btn btn-outline">Volver a la Selección de Rol</button>
             </div>
 
-            <h2 class="text-center mb-4">Tablero de Tickets</h2>
-            <table class="table table-bordered" id="ticketTableAdmin">
-                <thead>
-                    <tr>
-                        <th>Número de Ticket</th>
-                        <th>Usuario</th>
-                        <th>Compañía</th>
-                        <th>Correo Electrónico</th>
-                        <th>Descripción</th>
-                        <th>ID TeamViewer</th>
-                        <th>Contraseña TW</th>
-                        <th>Estado</th>
-                        <th>Fecha de Inicio</th>
-                        <th>Fecha de Resolución</th>
-                        <th>Comentarios</th>
-                        <th>Acciones</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="card panel-card shadow-sm mb-5">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Filtros avanzados</h3>
+                    <p class="mb-0">Utiliza los filtros para acotar la vista de tickets según su prioridad y compañía.</p>
+                </div>
+                <div class="card-body">
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label for="adminFilterStatus">Estado</label>
+                            <select id="adminFilterStatus" class="form-control">
+                                <option value="">Todos los Estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en proceso">En Proceso</option>
+                                <option value="cerrado">Cerrado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminFilterCompany">Compañía</label>
+                            <select id="adminFilterCompany" class="form-control">
+                                <option value="">Todas las Compañías</option>
+                                <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                                <option value="Allpack">Allpack</option>
+                                <option value="Business On Line">Business On Line</option>
+                                <option value="Zona Franca">Zona Franca</option>
+                                <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                                <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                                <option value="Asocolinas">Asocolinas</option>
+                                <option value="Corrugados Caribenos">Corrugados Caribenos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminFilterStartDate">Fecha inicio</label>
+                            <input type="date" id="adminFilterStartDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="adminFilterEndDate">Fecha fin</label>
+                            <input type="date" id="adminFilterEndDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="adminFilterTicket">Número de ticket</label>
+                            <input type="number" id="adminFilterTicket" class="form-control" placeholder="Número de Ticket">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="adminFilterApply" class="btn btn-primary">Aplicar Filtros</button>
+                        <button id="adminFilterClear" class="btn btn-outline">Borrar Filtros</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pagination-controls">
+                <button id="prevPageAdmin" class="btn btn-outline">Página Anterior</button>
+                <button id="nextPageAdmin" class="btn btn-outline">Página Siguiente</button>
+            </div>
+
+            <div class="card table-card shadow-sm mb-5">
+                <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Tablero de Tickets</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ticketTableAdmin">
+                        <thead>
+                            <tr>
+                                <th>Número de Ticket</th>
+                                <th>Usuario</th>
+                                <th>Compañía</th>
+                                <th>Correo Electrónico</th>
+                                <th>Descripción</th>
+                                <th>ID TeamViewer</th>
+                                <th>Contraseña TW</th>
+                                <th>Estado</th>
+                                <th>Fecha de Inicio</th>
+                                <th>Fecha de Resolución</th>
+                                <th>Comentarios</th>
+                                <th>Acciones</th>
+                                <th>Eliminar</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
             <!-- Estadísticas del Administrador -->
             <h3 class="mt-5">Estadísticas del Administrador</h3>
-            <ul id="adminStats"></ul>
+            <ul id="adminStats" class="admin-stats-list"></ul>
 
             <!-- KPI Mensual -->
-            <div id="kpiContainer">
-    <div class="form-inline mb-3">
-        <label for="kpiMes" class="mr-2">Mes:</label>
-        <select id="kpiMes" class="form-control mr-3">
-            <option value="1">Enero</option>
-            <option value="2">Febrero</option>
-            <option value="3">Marzo</option>
-            <option value="4">Abril</option>
-            <option value="5">Mayo</option>
-            <option value="6">Junio</option>
-            <option value="7">Julio</option>
-            <option value="8">Agosto</option>
-            <option value="9">Septiembre</option>
-            <option value="10">Octubre</option>
-            <option value="11">Noviembre</option>
-            <option value="12">Diciembre</option>
-        </select>
-        <label for="kpiAnio" class="mr-2">Año:</label>
-        <input type="number" id="kpiAnio" class="form-control" placeholder="Año" min="2000" max="2100">
-    </div>
-    <div class="form-inline mb-3">
-        <label for="kpiCompany" class="mr-2">Compañía:</label>
-        <select id="kpiCompany" class="form-control">
-            <option value="">Seleccione una compañía</option>
-            <option value="Colinas Alta Vista">Colinas Alta Vista</option>
-            <option value="Allpack">Allpack</option>
-            <option value="Business On Line">Business On Line</option>
-            <option value="Zona Franca">Zona Franca</option>
-            <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
-            <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
-             <option value="Asocolinas">Asocolinas</option>
-             <option value="Corrugados Caribenos">Corrugados Caribenos</option>
-            <!-- Añade más opciones según las compañías disponibles -->
-        </select>
-    </div>
-    <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
-    <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
-    <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
-    <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
-    <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
+            <div id="kpiContainer" class="panel-card p-3">
+                <div class="form-inline mb-3">
+                    <label for="kpiMes" class="mr-2">Mes:</label>
+                    <select id="kpiMes" class="form-control mr-3">
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                    <label for="kpiAnio" class="mr-2">Año:</label>
+                    <input type="number" id="kpiAnio" class="form-control" placeholder="Año" min="2000" max="2100">
+                </div>
+                <div class="form-inline mb-3">
+                    <label for="kpiCompany" class="mr-2">Compañía:</label>
+                    <select id="kpiCompany" class="form-control">
+                        <option value="">Seleccione una compañía</option>
+                        <option value="Colinas Alta Vista">Colinas Alta Vista</option>
+                        <option value="Allpack">Allpack</option>
+                        <option value="Business On Line">Business On Line</option>
+                        <option value="Zona Franca">Zona Franca</option>
+                        <option value="Almacén Fiscal La Victoria">Almacén Fiscal La Victoria</option>
+                        <option value="Hotel Colinas Alta Vista">Hotel Colinas Alta Vista</option>
+                        <option value="Asocolinas">Asocolinas</option>
+                        <option value="Corrugados Caribenos">Corrugados Caribenos</option>
+                        <!-- Añade más opciones según las compañías disponibles -->
+                    </select>
+                </div>
+                <p><strong>Total de Tickets:</strong> <span id="kpiTotal"></span></p>
+                <p><strong>Tickets Cerrados:</strong> <span id="kpiCerrados"></span></p>
+                <p><strong>Promedio de Resolución (horas):</strong> <span id="kpiPromedioResolucion"></span></p>
+                <p><strong>% de Tickets Cerrados:</strong> <span id="kpiPorcentajeCerrados"></span></p>
+                <button id="downloadKpiPdf" class="btn btn-primary mt-3">Descargar KPI en PDF</button>
             </div>
+        </section>
+    </main>
+
+    <!-- Footer visual -->
+    <footer class="app-footer">
+        <div class="container">
+            <p class="footer-title">Soporte TI – Contacto</p>
+            <p class="mb-1">Adrian Flores Roverssi</p>
+            <p class="mb-1"><a href="mailto:adrian.flores@corrugadosaltavista.com">adrian.flores@corrugadosaltavista.com</a></p>
+            <p class="mb-3">Teléfono: 8425-5252</p>
+            <p class="footer-note">Los tickets se atenderán conforme la jefatura de TI considere su prioridad.</p>
         </div>
-    </div>
+    </footer>
 </body>
 </html>
-
 
 
 
